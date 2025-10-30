@@ -1,0 +1,14 @@
+# =============================================================================
+# 個人固有のGit設定
+# このファイルは個人の環境に合わせてカスタマイズしてください
+# =============================================================================
+
+[user]
+    name = {{ onepasswordRead "op://Personal/GitHub.Personal/username" }}
+    email = {{ onepasswordRead "op://Personal/GitHub.Personal/email" }}
+    signingkey = {{ onepasswordRead "op://Personal/id_ed25519/public_key" }}
+
+# 1Password SSH署名設定
+[gpg "ssh"]
+    program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+

@@ -1,0 +1,61 @@
+[user]
+    name = 篠原亮太
+    email = your.email@example.com
+
+[core]
+    editor = vim
+    autocrlf = input
+    excludesfile = ~/.gitignore_global
+    pager = less -FRX
+
+[init]
+    defaultBranch = main
+
+[push]
+    default = simple
+    autoSetupRemote = true
+
+[pull]
+    rebase = true
+
+[rebase]
+    autoStash = true
+
+[merge]
+    ff = false
+
+[color]
+    ui = auto
+    diff = auto
+    status = auto
+    branch = auto
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    visual = !gitk
+
+[help]
+    autocorrect = 1
+
+[credential]
+    helper = osxkeychain
+
+# GPG設定
+[gpg]
+    format = ssh
+
+[commit]
+    gpgsign = true
+
+# URL設定
+[url "ssh://git@github.com"]
+    insteadOf = https://github.com
+
+# 個人固有の設定を読み込み
+[include]
+    path = ~/.config/git/config.local
