@@ -1,9 +1,41 @@
 # =============================================================================
-# ログイン時の基本設定
+# 環境変数とパス設定
 # =============================================================================
 
-# Homebrew環境設定
+# 基本環境変数
+export LANG=ja_JP.UTF-8
+export LC_ALL=ja_JP.UTF-8
+export EDITOR=vim
+export VISUAL=vim
+export PAGER=less
+
+# 基本パス設定
+export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
+# 履歴設定
+export HISTSIZE=10000
+export SAVEHIST=10000
+export HISTFILE="$HOME/.zsh_history"
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_verify
+setopt share_history
+
+# SSH_AUTH_SOCKを1passwordのエージェントに変更
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+
+# 開発環境関連
+# Homebrew設定
 eval "$(/opt/homebrew/bin/brew shellenv)"
+export HOMEBREW_NO_AUTO_UPDATE=1
+
+# asdf
+export ASDF_DATA_DIR="$HOME/.asdf"
+export PATH="$ASDF_DATA_DIR/shims:$PATH"
+export PATH="$ASDF_DATA_DIR/bin:$PATH"
 
 # direnv設定
-# eval "$(direnv hook zsh)"
+eval "$(direnv hook zsh)"
+

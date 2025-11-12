@@ -8,6 +8,11 @@ return {
 			"nvim-tree/nvim-web-devicons", -- optional, but recommended
 		},
 		lazy = false, -- neo-tree will lazily load itself
+		-- nvim-web-devicons が先に読み込まれるようにする
+		init = function()
+			-- nvim-web-devicons が確実に読み込まれていることを確認
+			pcall(require, "nvim-web-devicons")
+		end,
 		keys = {
 			{ "<leader>ee", "<cmd>Neotree left<cr>", desc = "Open Neo-Tree" },
 			{ "<leader>ef", "<cmd>Neotree float<cr>", desc = "Open Neo-Tree Float" },
@@ -44,28 +49,99 @@ return {
 					highlight = "NeoTreeIndentMarker",
 					-- expander config, needed for nesting files
 					with_expanders = nil, -- if nil and file nesting is enabled, will enable expanders
-					expander_collapsed = "",
-					expander_expanded = "",
+					-- より互換性の高い文字を使用
+					expander_collapsed = "▸",
+					expander_expanded = "▾",
 					expander_highlight = "NeoTreeExpander",
 				},
 				icon = {
-					folder_closed = "",
-					folder_open = "",
-					folder_empty = "󰜌",
-					provider = function(icon, node, state) -- default icon provider utilizes nvim-web-devicons if available
+					-- より互換性の高いフォルダアイコン（フォールバック）
+					folder_closed = "▸",
+					folder_open = "▾",
+					folder_empty = "▸",
+					provider = function(icon, node, state)
+						-- ディレクトリの場合
+						if node.type == "directory" then
+							-- まず nvim-web-devicons を試す
+							local success, web_devicons = pcall(require, "nvim-web-devicons")
+							if success then
+								local devicon, hl = web_devicons.get_icon(node.name, nil, { default = true })
+								if devicon and devicon ~= "" and devicon ~= "?" then
+									icon.text = devicon
+									icon.highlight = hl or icon.highlight
+									return
+								end
+							end
+							-- フォールバック: シンプルな文字を使用
+							if state.is_expanded then
+								icon.text = "▾"
+							else
+								icon.text = "▸"
+							end
+							return
+						end
+						
+						-- ファイルの場合
 						if node.type == "file" or node.type == "terminal" then
 							local success, web_devicons = pcall(require, "nvim-web-devicons")
 							local name = node.type == "terminal" and "terminal" or node.name
+							
 							if success then
-								local devicon, hl = web_devicons.get_icon(name)
-								icon.text = devicon or icon.text
-								icon.highlight = hl or icon.highlight
+								-- 拡張子を取得
+								local ext = ""
+								if node.name then
+									local match = node.name:match("%.([^.]+)$")
+									if match then
+										ext = match:lower()
+									end
+								end
+								
+								local devicon, hl = web_devicons.get_icon(name, ext, { default = true })
+								if devicon and devicon ~= "" and devicon ~= "?" then
+									icon.text = devicon
+									icon.highlight = hl or icon.highlight
+									return
+								end
+							end
+							
+							-- nvim-web-devicons が利用できない、またはアイコンが取得できない場合のフォールバック
+							local ext = ""
+							if node.name then
+								local match = node.name:match("%.([^.]+)$")
+								if match then
+									ext = match:lower()
+								end
+							end
+							
+							-- ファイルタイプに応じたシンプルな文字
+							if ext == "lua" then
+								icon.text = "L"
+							elseif ext == "md" then
+								icon.text = "M"
+							elseif ext == "json" then
+								icon.text = "J"
+							elseif ext == "ts" or ext == "tsx" or ext == "js" or ext == "jsx" then
+								icon.text = "J"
+							elseif ext == "py" then
+								icon.text = "P"
+							elseif ext == "go" then
+								icon.text = "G"
+							elseif ext == "rb" then
+								icon.text = "R"
+							elseif ext == "yaml" or ext == "yml" then
+								icon.text = "Y"
+							elseif ext == "sh" or ext == "bash" or ext == "zsh" then
+								icon.text = "S"
+							elseif ext == "txt" then
+								icon.text = "T"
+							elseif node.type == "terminal" then
+								icon.text = ">"
+							else
+								icon.text = " "
 							end
 						end
 					end,
-					-- The next two settings are only a fallback, if you use nvim-web-devicons and configure default icons there
-					-- then these will never be used.
-					default = "*",
+					default = " ",
 					highlight = "NeoTreeFileIcon",
 				},
 				modified = {

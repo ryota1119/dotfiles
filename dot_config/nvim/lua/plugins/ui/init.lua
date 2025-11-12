@@ -1,5 +1,6 @@
 -- UI plugins
 return {
+	require("plugins.ui.nvim-web-devicons"), -- アイコンライブラリを最初に読み込む
 	require("plugins.ui.which-key"),
 	require("plugins.ui.colorscheme"),
 	require("plugins.ui.lualine"),

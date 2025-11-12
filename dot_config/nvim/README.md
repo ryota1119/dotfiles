@@ -129,6 +129,72 @@ lua/
 - Neovim 0.9.0以上
 - Git
 - Node.js（一部のLSP用）
+- **Nerd Font**（アイコン表示用、推奨）
+
+### Nerd Font のインストール
+
+アイコンを正しく表示するには、Nerd Font のインストールが推奨されます。
+
+#### おすすめの Nerd Font
+
+| フォント名 | 特徴 | Homebrew コマンド |
+|----------|------|------------------|
+| **JetBrains Mono Nerd Font** ⭐ | モダンで視認性が高い。JetBrains 製IDEで使用されている。最も人気が高い。 | `brew install --cask font-jetbrains-mono-nerd-font` |
+| **Fira Code Nerd Font** | リガチャ（合字）機能が充実。読みやすい。 | `brew install --cask font-fira-code-nerd-font` |
+| **Hack Nerd Font** | シンプルで読みやすい。プログラミング専用に設計。 | `brew install --cask font-hack-nerd-font` |
+| **MesloLGS Nerd Font** | Powerlevel10k で使用される。ターミナル向けに最適化。 | `brew install --cask font-meslo-lg-nerd-font` |
+| **Caskaydia Cove Nerd Font** | Cascadia Code の派生。Windows Terminal で使用。 | `brew install --cask font-caskaydia-cove-nerd-font` |
+| **Iosevka Nerd Font** | スペース効率が良い。コンパクトで情報量が多い。 | `brew install --cask font-iosevka-nerd-font` |
+
+**推奨**: 
+- **初心者**: JetBrains Mono または Fira Code（視認性が高い）
+- **省スペース重視**: Iosevka（小さい画面でも見やすい）
+- **ターミナル特化**: MesloLGS（Powerlevel10k ユーザーに人気）
+
+#### macOS でのインストール
+
+1. Homebrew を使用する場合：
+
+```bash
+brew tap homebrew/cask-fonts
+# お好みのフォントをインストール（例：JetBrains Mono）
+brew install --cask font-jetbrains-mono-nerd-font
+```
+
+2. 手動インストールの場合：
+
+[Nerd Fonts の公式サイト](https://www.nerdfonts.com/font-downloads)からフォントをダウンロードしてインストール
+
+#### ターミナルでのフォント設定
+
+**iTerm2** の場合：
+1. Preferences → Profiles → Text → Font
+2. Nerd Font を選択（例: `JetBrainsMono Nerd Font`）
+
+**macOS 標準ターミナル** の場合：
+1. Preferences → Profiles → Text → Font
+2. Nerd Font を選択
+
+**Alacritty** の場合：
+`~/.config/alacritty/alacritty.toml` に以下を追加：
+
+```toml
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+# または
+# normal = { family = "FiraCode Nerd Font", style = "Regular" }
+```
+
+**Kitty** の場合：
+`~/.config/kitty/kitty.conf` に以下を追加：
+
+```conf
+font_family JetBrainsMono Nerd Font
+# または
+# font_family FiraCode Nerd Font
+```
+
+> **注意**: Nerd Font をインストールしない場合でも、フォールバック設定により基本的な文字アイコンが表示されます（例: `L` for Lua, `M` for Markdown など）。
 
 ### インストール
 
@@ -185,6 +251,17 @@ nvim
 
 1. `:Lazy sync`でプラグインを再同期
 2. `:Lazy log`でエラーログを確認
+
+### アイコンが `?` と表示される
+
+1. **Nerd Font がインストールされているか確認**
+   - システムフォント一覧に Nerd Font が表示されているか確認
+2. **ターミナルのフォント設定を確認**
+   - ターミナルの設定で Nerd Font が選択されているか確認
+3. **ターミナルを再起動**
+   - フォントを変更した後は、ターミナルを再起動してください
+4. **フォールバック設定**
+   - Nerd Font が利用できない場合、基本的な文字アイコン（`L`、`M`、`J` など）が表示されます
 
 ### LSPが動作しない
 

@@ -1,0 +1,27 @@
+*.agekey
+*.pem
+*.secret
+*.bak
+*.tmp
+
+**/private_*
+**/*secret*
+**/secrets/*
+run_once_*.sh
+
+# macOS
+.DS_Store
+**/.DS_Store
+dot_DS_Store
+**/dot_DS_Store
+
+# Lock files (auto-generated)
+lazy-lock.json
+**/lazy-lock.json
+Gemfile.lock
+**/Gemfile.lock
+
+# Editor temporary files
+*.swp
+*.swo
+*~
