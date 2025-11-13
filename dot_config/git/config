@@ -55,3 +55,5 @@
 # 個人固有の設定を読み込み
 [include]
     path = ~/.config/git/config.local
+[ghq]
+	root = /Users/shinohararyouta/src
