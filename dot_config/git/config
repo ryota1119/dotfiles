@@ -56,4 +56,4 @@
 [include]
     path = ~/.config/git/config.local
 [ghq]
-	root = /Users/shinohararyouta/src
+	root = ~/src
