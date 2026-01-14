@@ -4,11 +4,8 @@ export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
 export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200'"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# asdf init
-if [ -f "$HOME/.asdf/asdf.sh" ]; then
-  . "$HOME/.asdf/asdf.sh"
-fi
-
 # lazy git
 export XDG_CONFIG_HOME="$HOME/.config"
 
+# mise
+eval "$(mise activate zsh)"

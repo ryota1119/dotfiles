@@ -5,7 +5,7 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
-      "nvim-tree/nvim-web-devicons",
+      "echasnovski/mini.icons",
     },
     lazy = false,
     keys = {
