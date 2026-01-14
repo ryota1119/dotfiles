@@ -9,3 +9,6 @@ export XDG_CONFIG_HOME="$HOME/.config"
 
 # mise
 eval "$(mise activate zsh)"
+
+# bison mise経由でphpをインストールするのに必要
+export PATH="/opt/homebrew/opt/bison/bin:$PATH"

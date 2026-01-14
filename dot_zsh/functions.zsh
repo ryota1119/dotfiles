@@ -198,3 +198,31 @@ gh-pr-issue-fzf() {
     gh issue view "$issue_num" --web
   fi
 }
+
+# =============================================================================
+# mise/fzf関連関数
+# =============================================================================
+
+# miseで管理できるツールをfzfで選択し、バージョンを選択してインストールする
+mise-fzf() {
+  local tool version
+  
+  # Step 1: mise registryから言語/ツールを選択（最初の列のみ抽出）
+  tool=$(mise registry | awk '{print $1}' | fzf --prompt "Tool: ")
+  if [ -z "$tool" ]; then
+    echo "キャンセルされました"
+    return
+  fi
+  
+  # Step 2: 選択したツールのバージョン一覧から選択（最新20件、新しい順）
+  echo "バージョン一覧を取得中..."
+  version=$(mise ls-remote "$tool" | sort -Vr | fzf --prompt "Version ($tool): ")
+  if [ -z "$version" ]; then
+    echo "キャンセルされました"
+    return
+  fi
+  
+  # Step 3: 選択したツールとバージョンをインストール
+  echo "Installing $tool@$version..."
+  mise install "$tool@$version"
+}
