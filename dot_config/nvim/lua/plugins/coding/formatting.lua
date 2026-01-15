@@ -1,45 +1,89 @@
+-- ============================================================================
+-- conform.nvim: コードフォーマッター
+-- ============================================================================
 return {
   "stevearc/conform.nvim",
-  event = { "BufReadPre", "BufNewFile" },
+  event = { "BufWritePre" },
+  cmd = { "ConformInfo" },
+  keys = {
+    {
+      "<leader>cf",
+      function()
+        require("conform").format({ async = true, lsp_fallback = true })
+      end,
+      mode = { "n", "v" },
+      desc = "Format buffer",
+    },
+  },
   opts = {
-    -- 外部フォーマッタを使いたい言語だけ列挙
+    -- 言語ごとのフォーマッター設定
     formatters_by_ft = {
+      -- Lua
       lua = { "stylua" },
-      -- JS/TS は Prettier 優先（LSP では整えない）
-      html = { "prettier" },
-      css = { "prettier" },
-      scss = { "prettier" },
-      sass = { "prettier" },
+      
+      -- JavaScript/TypeScript
       javascript = { "prettier" },
       javascriptreact = { "prettier" },
       typescript = { "prettier" },
       typescriptreact = { "prettier" },
+      
+      -- Web
+      html = { "prettier" },
+      css = { "prettier" },
+      scss = { "prettier" },
+      sass = { "prettier" },
+      
+      -- 設定ファイル
       json = { "prettier" },
+      jsonc = { "prettier" },
       yaml = { "prettier" },
       yml = { "prettier" },
+      toml = { "taplo" },
+      
+      -- ドキュメント
       markdown = { "prettier" },
-
-      -- シェル
+      
+      -- その他の言語
       sh = { "shfmt" },
-      -- php
-      php = { "php_cs_fixer" },
-      -- go
-      go = { "gofumpt" },
-      -- -- ruby
+      bash = { "shfmt" },
+      go = { "gofumpt", "goimports" },
+      python = { "black", "isort" },
+      rust = { "rustfmt" },
+      
+      -- コメントアウト例
       -- ruby = { "rubocop" },
-      -- -- erb
+      -- php = { "php_cs_fixer" },
       -- eruby = { "erb_lint" },
-      -- ["html.erb"] = { "erb_lint" },
-
-      -- LSP フォーマットにフォールバック
-      -- python
-      -- python = { "black" },
     },
 
-    -- 保存時の自動フォーマット（外部なければLSPを使う）
+    -- デフォルトフォーマットオプション
+    default_format_opts = {
+      lsp_fallback = true,
+    },
+
+    -- 保存時の自動フォーマット
     format_on_save = function(bufnr)
-      -- 大きすぎるファイルを避けたい場合などはここで条件分岐も可能
-      return { timeout_ms = 5000, lsp_fallback = true }
+      -- 大きすぎるファイルはスキップ
+      local max_filesize = 100 * 1024 -- 100 KB
+      local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
+      if ok and stats and stats.size > max_filesize then
+        return
+      end
+
+      return {
+        timeout_ms = 500,
+        lsp_fallback = true,
+      }
     end,
+
+    -- フォーマッター設定のカスタマイズ
+    formatters = {
+      shfmt = {
+        prepend_args = { "-i", "2" }, -- インデント2スペース
+      },
+    },
+
+    -- 通知設定
+    notify_on_error = true,
   },
 }

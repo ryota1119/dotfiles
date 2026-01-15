@@ -1,13 +1,17 @@
+-- ============================================================================
+-- barbar.nvim: バッファライン
+-- ============================================================================
 return {
   "romgrk/barbar.nvim",
+  event = "VeryLazy",
   dependencies = {
-    "lewis6991/gitsigns.nvim", -- OPTIONAL: for git status
-    "echasnovski/mini.icons", -- OPTIONAL: for file icons
+    "lewis6991/gitsigns.nvim",
+    "echasnovski/mini.icons",
   },
-	init = function()
-		vim.g.barbar_auto_setup = true
-	end,
-	opts = {
+  init = function()
+    vim.g.barbar_auto_setup = false
+  end,
+  opts = {
 		-- lazy.nvim will automatically call setup for you. put your options here, anything missing will use the default:
 		animation = true,
 		auto_hide = false,

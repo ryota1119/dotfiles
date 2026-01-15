@@ -4,32 +4,48 @@
 
 ## 🚀 特徴
 
-- **Lazy.nvim**による高速なプラグイン管理
-- **LSP**による高度な言語サポート
-- **Treesitter**による高速なシンタックスハイライト
+- **Lazy.nvim**による高速なプラグイン管理とパフォーマンス最適化
+- **LSP (Neovim 0.11+)**による最新の言語サーバー統合
+- **Treesitter**による高度なシンタックスハイライトとコード解析
 - **Telescope**による強力なファジーファインダー
-- **Neo-tree**によるファイルエクスプローラー
+- **Neo-tree**によるモダンなファイルエクスプローラー
 - **Lualine**による美しいステータスライン
-- **Mason**によるツール管理
+- **Mason**による統一されたツール管理
+- **Conform.nvim**による高速フォーマット
+- **nvim-cmp**による高度な補完機能
+- **Gitsigns**によるGit統合
+- **LSPsaga**による豊富なLSP UI
 
 ## 📁 ディレクトリ構造
 
 ```plaintext
-lua/
-├── config/           # 基本設定
-│   ├── autocmds.lua # 自動コマンド
-│   ├── keymaps.lua  # キーマッピング
-│   ├── lazy.lua     # プラグイン管理
-│   ├── lsp.lua      # LSP設定
-│   └── options.lua  # Neovimオプション
-└── plugins/          # プラグイン設定
-    ├── core/         # コアプラグイン
-    ├── ui/           # UI関連プラグイン
-    ├── lsp/          # LSP関連プラグイン
-    ├── coding/       # コーディング支援プラグイン
-    ├── ai/           # AI関連プラグイン
-    ├── git/          # Git関連プラグイン
-    └── editor/       # エディタ機能プラグイン
+~/.config/nvim/
+├── init.lua              # エントリーポイント
+├── lsp/                  # LSPサーバー個別設定
+│   ├── bashls.lua
+│   ├── gopls.lua
+│   ├── jsonls.lua
+│   ├── lua_ls.lua
+│   ├── ruby_lsp.lua
+│   ├── terraform_ls.lua
+│   ├── vtsls.lua
+│   └── yamlls.lua
+└── lua/
+    ├── config/           # 基本設定
+    │   ├── autocmds.lua  # 自動コマンド
+    │   ├── filetype.lua  # ファイルタイプ設定
+    │   ├── keymaps.lua   # キーマッピング
+    │   ├── lazy.lua      # プラグイン管理
+    │   └── options.lua   # Neovimオプション
+    ├── lsp/              # LSP基本設定
+    │   └── init.lua      # LSP初期化
+    └── plugins/          # プラグイン設定
+        ├── core/         # コアプラグイン（Mason, Telescope）
+        ├── ui/           # UI関連プラグイン
+        ├── lsp/          # LSP関連プラグイン
+        ├── coding/       # コーディング支援プラグイン
+        ├── git/          # Git関連プラグイン
+        └── editor/       # エディタ機能プラグイン
 ```
 
 ## 🛠️ 主要プラグイン
@@ -42,21 +58,28 @@ lua/
 
 ### UI/UX
 
-- **tokyonight**: 美しいカラースキーム
-- **lualine.nvim**: ステータスライン
-- **neo-tree.nvim**: ファイルエクスプローラー
-- **barbar.nvim**: タブバー
-- **which-key.nvim**: キーバインド表示
+- **backpack.nvim**: モダンなカラースキーム
+- **lualine.nvim**: カスタマイズされたステータスライン
+- **neo-tree.nvim**: 高速ファイルエクスプローラー
+- **barbar.nvim**: バッファタブライン
+- **which-key.nvim**: キーバインドヘルパー
 - **dashboard-nvim**: スタートアップ画面
+- **mini.icons**: 軽量アイコンプラグイン
 
 ### LSP・開発支援
 
-- **nvim-lspconfig**: LSP設定
-- **lspsaga.nvim**: LSP UI拡張
-- **mason-lspconfig**: MasonとLSPの統合
-- **nvim-treesitter**: 高速シンタックス解析
-- **trouble.nvim**: 診断情報表示
-- **mason-null-ls**: フォーマッター・リンター統合
+- **nvim-lspconfig**: LSP設定（Neovim 0.11+ 対応）
+- **lspsaga.nvim**: 豊富なLSP UI機能
+- **mason.nvim & mason-lspconfig.nvim**: LSPサーバー管理
+- **nvim-treesitter**: 高速シンタックス解析とテキストオブジェクト
+- **nvim-treesitter-textobjects**: Treesitterベースのテキストオブジェクト
+- **trouble.nvim**: 診断情報の一覧表示
+- **conform.nvim**: 高速フォーマッター
+- **nvim-cmp**: 補完エンジン
+  - **cmp-nvim-lsp**: LSP補完ソース
+  - **cmp-buffer**: バッファ補完
+  - **cmp-path**: パス補完
+  - **LuaSnip**: スニペットエンジン
 
 ## ⌨️ 主要キーマッピング
 
@@ -79,22 +102,52 @@ lua/
 ### LSP操作
 
 - `gd`: 定義にジャンプ
+- `gD`: 宣言にジャンプ
 - `gr`: 参照を検索
 - `gi`: 実装を検索
+- `gy`: 型定義にジャンプ
 - `K`: ホバードキュメント
 - `<leader>ca`: コードアクション
-- `<leader>rn`: リネーム
+- `<leader>cr`: リネーム
+- `<leader>cf`: フォーマット
+- `<leader>cd`: 診断情報を表示
+- `[d` / `]d`: 前/次の診断へ移動
+- `<leader>cl`: LSP情報を表示
 
-### ファイル操作
+### Telescope（検索）
 
-- `<leader>e`: Neo-treeサイドバー切り替え
-- `<leader>ef`: Neo-treeフロート切り替え
+- `<leader>ff`: ファイル検索
+- `<leader>fr`: 最近開いたファイル
+- `<leader>fg`: テキスト検索（Live grep）
+- `<leader>fw`: カーソル下の単語を検索
+- `<leader>fb`: バッファ一覧
+- `<leader>fh`: ヘルプタグ検索
+- `<leader>fs`: ドキュメントシンボル
+- `<leader>fS`: ワークスペースシンボル
 
-### 検索・診断
+### ファイルエクスプローラー
 
-- `<leader>d`: ドキュメント診断
-- `<leader>wd`: ワークスペース診断
-- `<leader>h`: 検索ハイライト解除
+- `<leader>ee`: Neo-tree（左側）
+- `<leader>ef`: Neo-tree（フロート）
+- `<leader>et`: Neo-tree（トグル）
+- `<leader>ec`: Neo-tree（閉じる）
+
+### Git操作
+
+- `]c` / `[c`: 次/前のHunkへ移動
+- `<leader>hs`: Hunkをステージ
+- `<leader>hr`: Hunkをリセット
+- `<leader>hp`: Hunkをプレビュー
+- `<leader>hb`: Blameを表示
+- `<leader>hd`: Diffを表示
+- `<leader>gc`: Gitコミット一覧
+- `<leader>gs`: Gitステータス
+
+### 診断・トラブルシュート
+
+- `<leader>xx`: 診断一覧（Trouble）
+- `<leader>xX`: バッファ診断（Trouble）
+- `<leader>/`: 検索ハイライト解除
 
 ## ⚙️ 設定オプション
 
@@ -126,10 +179,19 @@ lua/
 
 ### 前提条件
 
-- Neovim 0.9.0以上
+- **Neovim 0.10.0以上**（0.11.0推奨 - 最新LSP機能対応）
 - Git
-- Node.js（一部のLSP用）
+- **ripgrep** (Telescope検索用)
+- **fd** (Telescope検索用、オプション)
+- Node.js（TypeScript/JavaScript LSP用）
+- **make** (Telescope FZF拡張のビルド用)
 - **Nerd Font**（アイコン表示用、推奨）
+
+#### 依存ツールのインストール (macOS)
+
+```bash
+brew install neovim ripgrep fd node
+```
 
 ### Nerd Font のインストール
 

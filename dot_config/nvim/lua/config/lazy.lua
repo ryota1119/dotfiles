@@ -1,8 +1,27 @@
--- Bootstrap lazy.nvim
+-- ============================================================================
+-- lazy.nvim ブートストラップと設定
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Leader キーの設定（lazy.nvim読み込み前に設定必須）
+-- ----------------------------------------------------------------------------
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
+-- ----------------------------------------------------------------------------
+-- lazy.nvim のブートストラップ
+-- ----------------------------------------------------------------------------
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
-  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  local out = vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "--branch=stable",
+    lazyrepo,
+    lazypath,
+  })
   if vim.v.shell_error ~= 0 then
     vim.api.nvim_echo({
       { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
@@ -15,22 +34,75 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Make sure to setup `mapleader` and `maplocalleader` before
--- loading lazy.nvim so that mappings are correct.
--- This is also a good place to setup other settings (vim.opt)
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
-
--- Setup lazy.nvim
+-- ----------------------------------------------------------------------------
+-- lazy.nvim のセットアップ
+-- ----------------------------------------------------------------------------
 require("lazy").setup({
+  -- プラグイン仕様
   spec = {
-    -- import your plugins
     { import = "plugins" },
   },
-  -- Configure any other settings here. See the documentation for more details.
-  -- colorscheme that will be used when installing plugins.
-  install = { colorscheme = { "habamax" } },
-  -- automatically check for plugin updates
-  checker = { enabled = true },
-  rocks = { enabled = false },
+
+  -- インストール設定
+  install = {
+    colorscheme = { "habamax" },  -- インストール時の仮カラースキーム
+  },
+
+  -- UI設定
+  ui = {
+    border = "rounded",  -- ウィンドウの境界線スタイル
+    size = {
+      width = 0.8,
+      height = 0.8,
+    },
+    icons = {
+      cmd = "⌘",
+      config = "🛠",
+      event = "📅",
+      ft = "📂",
+      init = "⚙",
+      keys = "🗝",
+      plugin = "🔌",
+      runtime = "💻",
+      require = "🌙",
+      source = "📄",
+      start = "🚀",
+      task = "📌",
+      lazy = "💤 ",
+    },
+  },
+
+  -- パフォーマンス設定
+  performance = {
+    rtp = {
+      disabled_plugins = {
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
+
+  -- 変更検知設定
+  change_detection = {
+    enabled = true,      -- 設定ファイルの変更を自動検知
+    notify = false,      -- 通知は無効（うるさいので）
+  },
+
+  -- 自動更新チェック
+  checker = {
+    enabled = true,      -- 自動更新チェックを有効化
+    notify = false,      -- 通知は無効
+    frequency = 3600,    -- チェック頻度（秒）
+  },
+
+  -- Luarocks無効化（パフォーマンス向上）
+  rocks = {
+    enabled = false,
+  },
 })

@@ -1,36 +1,90 @@
--- Neovim基本オプション設定
+-- ============================================================================
+-- Neovim 基本オプション設定
+-- ============================================================================
 local opt = vim.opt
+local g = vim.g
 
+-- ============================================================================
 -- 基本設定
-opt.number = true
-opt.relativenumber = false
-opt.mouse = "a"
-opt.clipboard = ""
+-- ============================================================================
+opt.number = true              -- 行番号を表示
+opt.relativenumber = false     -- 相対行番号は無効
+opt.mouse = "a"                -- マウス操作を有効化
+opt.clipboard = ""             -- システムクリップボードは手動で使用（keymapsで設定）
+opt.confirm = true             -- 未保存時に確認ダイアログを表示
+opt.undofile = true            -- 永続的なアンドゥ履歴を保存
+opt.backup = false             -- バックアップファイルを作成しない
+opt.writebackup = false        -- 上書き前のバックアップを作成しない
+opt.swapfile = false           -- スワップファイルを作成しない
 
+-- ============================================================================
 -- インデント設定
-opt.expandtab = true
-opt.shiftwidth = 2
-opt.tabstop = 2
-opt.smartindent = true
+-- ============================================================================
+opt.expandtab = true           -- タブをスペースに展開
+opt.shiftwidth = 2             -- 自動インデント幅
+opt.tabstop = 2                -- タブ文字の表示幅
+opt.softtabstop = 2            -- タブキー押下時の挿入幅
+opt.smartindent = true         -- 賢いインデント
+opt.shiftround = true          -- インデントを shiftwidth の倍数に丸める
 
+-- ============================================================================
 -- 検索設定
-opt.ignorecase = true
-opt.smartcase = true
-opt.hlsearch = true
-opt.incsearch = true
+-- ============================================================================
+opt.ignorecase = true          -- 検索時に大文字小文字を区別しない
+opt.smartcase = true           -- 大文字が含まれる場合は区別する
+opt.hlsearch = true            -- 検索結果をハイライト
+opt.incsearch = true           -- インクリメンタルサーチ
 
+-- ============================================================================
 -- UI設定
-opt.termguicolors = true
-opt.showmode = false
-opt.cursorline = true
-opt.signcolumn = "yes"
-opt.wrap = false
-opt.showtabline = 2
-opt.hidden = true
+-- ============================================================================
+opt.termguicolors = true       -- 24bit RGBカラーを使用
+opt.showmode = false           -- モード表示を非表示（ステータスラインに任せる）
+opt.cursorline = true          -- カーソル行をハイライト
+opt.signcolumn = "yes"         -- サイン列を常に表示
+opt.wrap = false               -- 行の折り返しを無効化
+opt.showtabline = 2            -- タブラインを常に表示
+opt.splitbelow = true          -- 水平分割を下に開く
+opt.splitright = true          -- 垂直分割を右に開く
+opt.pumheight = 10             -- ポップアップメニューの最大高さ
+opt.scrolloff = 8              -- スクロール時の上下余白
+opt.sidescrolloff = 8          -- スクロール時の左右余白
+opt.laststatus = 3             -- グローバルステータスライン（Neovim 0.7+）
+opt.cmdheight = 1              -- コマンドラインの高さ
 
+-- ============================================================================
 -- パフォーマンス設定
-opt.updatetime = 300
+-- ============================================================================
+opt.updatetime = 250           -- CursorHoldイベントの発火間隔（ミリ秒）
+opt.timeoutlen = 300           -- キーマップのタイムアウト時間
+opt.redrawtime = 1500          -- 再描画のタイムアウト
 
--- LSP関連のオプション
-opt.completeopt = { "menuone", "noinsert", "noselect" }
-opt.shortmess:append("c") -- 補完メッセージを短縮 
+-- ============================================================================
+-- LSP/補完関連のオプション
+-- ============================================================================
+opt.completeopt = { "menu", "menuone", "noselect" }  -- 補完メニューの動作
+opt.shortmess:append("c")      -- 補完メッセージを短縮
+
+-- ============================================================================
+-- その他
+-- ============================================================================
+opt.conceallevel = 0           -- JSONなどの隠し文字を表示
+opt.list = true                -- 不可視文字を表示
+opt.listchars = {              -- 不可視文字の表示設定
+  tab = "→ ",
+  trail = "·",
+  extends = "»",
+  precedes = "«",
+  nbsp = "␣",
+}
+opt.fillchars = {              -- 特殊文字の表示設定
+  eob = " ",                   -- 空行を空白で表示
+}
+
+-- ============================================================================
+-- プロバイダー無効化（パフォーマンス向上）
+-- ============================================================================
+g.loaded_perl_provider = 0     -- Perlプロバイダーを無効化
+g.loaded_ruby_provider = 0     -- Rubyプロバイダーを無効化
+g.loaded_node_provider = 0     -- Node.jsプロバイダーを無効化
+g.loaded_python3_provider = 0  -- Python3プロバイダーを無効化 
