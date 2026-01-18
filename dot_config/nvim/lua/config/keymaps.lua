@@ -1,96 +1,52 @@
--- ============================================================================
--- グローバルキーマップ設定
--- ============================================================================
--- このファイルには、プラグインに依存しない基本的なVim/Neovim操作のみを記述します。
--- プラグイン固有のkeymapは各プラグインファイル内で定義してください。
--- ============================================================================
+-- キーマップ設定
 
--- 共通オプション
+local keymap = vim.keymap.set
 local opts = { noremap = true, silent = true }
 
--- ----------------------------------------------------------------------------
--- 基本操作
--- ----------------------------------------------------------------------------
-vim.keymap.set("n", "<leader>w", "<cmd>w<cr>", vim.tbl_extend("force", opts, { desc = "Save file" }))
-vim.keymap.set("n", "<leader>q", "<cmd>q<cr>", vim.tbl_extend("force", opts, { desc = "Quit window" }))
-vim.keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", vim.tbl_extend("force", opts, { desc = "Quit all (force)" }))
+-- リーダーキーは lazy.lua で設定済み（スペース）
 
--- バッファ操作
-vim.keymap.set("n", "<leader>bd", "<cmd>bd<cr>", vim.tbl_extend("force", opts, { desc = "Delete buffer" }))
-vim.keymap.set("n", "<leader>ba", "<cmd>%bd|e#<cr>", vim.tbl_extend("force", opts, { desc = "Delete all buffers except current" }))
+-- ノーマルモード
+-- より快適な上下移動（表示行単位で移動）
+keymap("n", "j", "gj", opts)
+keymap("n", "k", "gk", opts)
 
--- ウィンドウ分割
-vim.keymap.set("n", "<leader>-", "<C-w>s", vim.tbl_extend("force", opts, { desc = "Split window horizontally" }))
-vim.keymap.set("n", "<leader>|", "<C-w>v", vim.tbl_extend("force", opts, { desc = "Split window vertically" }))
+-- ウィンドウ間の移動
+keymap("n", "<C-h>", "<C-w>h", opts)
+keymap("n", "<C-j>", "<C-w>j", opts)
+keymap("n", "<C-k>", "<C-w>k", opts)
+keymap("n", "<C-l>", "<C-w>l", opts)
 
--- ウィンドウ間移動（矢印キー）
-vim.keymap.set("n", "<C-h>", "<C-w>h", vim.tbl_extend("force", opts, { desc = "Move to left window" }))
-vim.keymap.set("n", "<C-j>", "<C-w>j", vim.tbl_extend("force", opts, { desc = "Move to below window" }))
-vim.keymap.set("n", "<C-k>", "<C-w>k", vim.tbl_extend("force", opts, { desc = "Move to above window" }))
-vim.keymap.set("n", "<C-l>", "<C-w>l", vim.tbl_extend("force", opts, { desc = "Move to right window" }))
+-- ウィンドウのリサイズ
+keymap("n", "<C-Up>", ":resize +2<CR>", opts)
+keymap("n", "<C-Down>", ":resize -2<CR>", opts)
+keymap("n", "<C-Left>", ":vertical resize -2<CR>", opts)
+keymap("n", "<C-Right>", ":vertical resize +2<CR>", opts)
 
--- ウィンドウリサイズ
-vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", vim.tbl_extend("force", opts, { desc = "Increase window height" }))
-vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", vim.tbl_extend("force", opts, { desc = "Decrease window height" }))
-vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", vim.tbl_extend("force", opts, { desc = "Decrease window width" }))
-vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", vim.tbl_extend("force", opts, { desc = "Increase window width" }))
+-- バッファ移動
+keymap("n", "<S-l>", ":bnext<CR>", opts)
+keymap("n", "<S-h>", ":bprevious<CR>", opts)
 
--- ----------------------------------------------------------------------------
--- 検索
--- ----------------------------------------------------------------------------
-vim.keymap.set("n", "n", "nzzzv", vim.tbl_extend("force", opts, { desc = "Next search result (centered)" }))
-vim.keymap.set("n", "N", "Nzzzv", vim.tbl_extend("force", opts, { desc = "Previous search result (centered)" }))
-vim.keymap.set("n", "*", "*zzzv", vim.tbl_extend("force", opts, { desc = "Search word under cursor (centered)" }))
-vim.keymap.set("n", "#", "#zzzv", vim.tbl_extend("force", opts, { desc = "Search word under cursor backward (centered)" }))
-vim.keymap.set("n", "<leader>/", "<cmd>nohlsearch<cr>", vim.tbl_extend("force", opts, { desc = "Clear search highlight" }))
+-- インデント調整
+keymap("v", "<", "<gv", opts)
+keymap("v", ">", ">gv", opts)
 
--- ----------------------------------------------------------------------------
--- 編集
--- ----------------------------------------------------------------------------
--- Visualモードで選択範囲を移動
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", vim.tbl_extend("force", opts, { desc = "Move selection down" }))
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", vim.tbl_extend("force", opts, { desc = "Move selection up" }))
+-- 選択したテキストの移動
+keymap("v", "J", ":m '>+1<CR>gv=gv", opts)
+keymap("v", "K", ":m '<-2<CR>gv=gv", opts)
 
--- インデント調整後も選択を維持
-vim.keymap.set("v", "<", "<gv", vim.tbl_extend("force", opts, { desc = "Indent left" }))
-vim.keymap.set("v", ">", ">gv", vim.tbl_extend("force", opts, { desc = "Indent right" }))
+-- ビジュアルモードでペースト時にヤンクしない
+keymap("v", "p", '"_dP', opts)
 
--- 行の結合時にカーソル位置を維持
-vim.keymap.set("n", "J", "mzJ`z", vim.tbl_extend("force", opts, { desc = "Join lines" }))
+-- 検索結果のハイライトを消す
+keymap("n", "<leader>h", ":nohlsearch<CR>", opts)
 
--- ----------------------------------------------------------------------------
--- システムクリップボード連携
--- ----------------------------------------------------------------------------
--- yank系は常にシステムクリップボード
-vim.keymap.set({ "n", "x" }, "y", '"+y', vim.tbl_extend("force", opts, { desc = "Yank to system clipboard" }))
-vim.keymap.set("n", "Y", '"+y$', vim.tbl_extend("force", opts, { desc = "Yank to end of line (system clipboard)" }))
+-- 保存と終了
+keymap("n", "<leader>w", ":w<CR>", opts)
+keymap("n", "<leader>q", ":q<CR>", opts)
 
--- paste系も常にシステムクリップボード
-vim.keymap.set({ "n", "x" }, "p", '"+p', vim.tbl_extend("force", opts, { desc = "Paste from system clipboard" }))
-vim.keymap.set({ "n", "x" }, "P", '"+P', vim.tbl_extend("force", opts, { desc = "Paste before cursor (system clipboard)" }))
+-- 分割
+keymap("n", "<leader>sv", ":vsplit<CR>", opts)
+keymap("n", "<leader>sh", ":split<CR>", opts)
 
--- Visualモードでペースト時にヤンクレジスタを保持
-vim.keymap.set("x", "p", [["_dP]], vim.tbl_extend("force", opts, { desc = "Paste without yanking" }))
-
--- ----------------------------------------------------------------------------
--- その他
--- ----------------------------------------------------------------------------
--- Escapeの代替（jk または kj）
-vim.keymap.set("i", "jk", "<Esc>", vim.tbl_extend("force", opts, { desc = "Exit insert mode" }))
-vim.keymap.set("i", "kj", "<Esc>", vim.tbl_extend("force", opts, { desc = "Exit insert mode" }))
-
--- 行頭・行末への移動
-vim.keymap.set({ "n", "v" }, "H", "^", vim.tbl_extend("force", opts, { desc = "Go to beginning of line" }))
-vim.keymap.set({ "n", "v" }, "L", "$", vim.tbl_extend("force", opts, { desc = "Go to end of line" }))
-
--- ページ移動時にカーソルを中央に
-vim.keymap.set("n", "<C-d>", "<C-d>zz", vim.tbl_extend("force", opts, { desc = "Scroll down (centered)" }))
-vim.keymap.set("n", "<C-u>", "<C-u>zz", vim.tbl_extend("force", opts, { desc = "Scroll up (centered)" }))
-
--- QuickFix list navigation
-vim.keymap.set("n", "[q", "<cmd>cprev<cr>", vim.tbl_extend("force", opts, { desc = "Previous quickfix" }))
-vim.keymap.set("n", "]q", "<cmd>cnext<cr>", vim.tbl_extend("force", opts, { desc = "Next quickfix" }))
-
--- Location list navigation
-vim.keymap.set("n", "[l", "<cmd>lprev<cr>", vim.tbl_extend("force", opts, { desc = "Previous location" }))
-vim.keymap.set("n", "]l", "<cmd>lnext<cr>", vim.tbl_extend("force", opts, { desc = "Next location" }))
+-- バッファを閉じる
+keymap("n", "<leader>bd", ":bdelete<CR>", opts)

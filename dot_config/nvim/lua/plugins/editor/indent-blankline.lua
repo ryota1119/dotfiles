@@ -1,21 +1,31 @@
 return {
-	"lukas-reineke/indent-blankline.nvim",
-	main = "ibl",
-
-	event = { "BufReadPost", "BufNewFile" },
-	opts = {},
-
-	config = function(_, opts)
-		local ibl = require("ibl")
-
-		-- 無効化したいファイルタイプを指定
-		vim.api.nvim_create_autocmd("FileType", {
-			pattern = { "dashboard" },
-			callback = function()
-				vim.b.ibl_disable = true
-			end,
-		})
-
-		ibl.setup(opts)
-	end,
+  "lukas-reineke/indent-blankline.nvim",
+  main = "ibl",
+  ---@module "ibl"
+  ---@type ibl.config
+  opts = {
+    indent = {
+      char = "│",
+      tab_char = "│",
+    },
+    scope = {
+      enabled = false,
+      show_start = false,
+      show_end = false,
+    },
+    exclude = {
+      filetypes = {
+        "help",
+        "alpha",
+        "dashboard",
+        "neo-tree",
+        "Trouble",
+        "lazy",
+        "mason",
+        "notify",
+        "toggleterm",
+        "lazyterm",
+      },
+    },
+  },
 }
