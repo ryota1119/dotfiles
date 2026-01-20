@@ -5,3 +5,6 @@ require("config.autocmds")
 
 -- プラグインマネージャを読み込む
 require("config.lazy")
+
+-- LSP設定を読み込む
+require("config.lsp")

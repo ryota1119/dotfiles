@@ -31,11 +31,11 @@ return {
     wk.add({
       mode = { "n", "v" },
       { "<leader>b", group = "Buffer" },
+      { "<leader>c", group = "Code" },
       { "<leader>f", group = "Find" },
       { "<leader>g", group = "Git" },
-      { "<leader>l", group = "LSP" },
       { "<leader>s", group = "Split" },
-      { "<leader>t", group = "Terminal" },
+      { "<leader>t", group = "Toggle" },
       { "<leader>w", "<cmd>w<cr>", desc = "Save" },
       { "<leader>q", "<cmd>q<cr>", desc = "Quit" },
       { "<leader>h", "<cmd>nohlsearch<cr>", desc = "No Highlight" },
