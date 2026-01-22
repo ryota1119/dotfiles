@@ -20,17 +20,5 @@ return {
       highlight_grey = "Comment",
     },
   },
-  config = function(_, opts)
-    local npairs = require("nvim-autopairs")
-    npairs.setup(opts)
-
-    -- blink.cmpと統合（補完確定時に括弧を自動挿入）
-    local cmp_autopairs = require("nvim-autopairs.completion.cmp")
-    local cmp = require("blink.cmp")
-    
-    -- blink.cmpの確定イベントにフック
-    cmp.on_confirm = function()
-      cmp_autopairs.on_confirm()
-    end
-  end,
+  opts = opts,
 }
