@@ -48,3 +48,32 @@ autocmd("TermOpen", {
     vim.opt_local.relativenumber = false
   end,
 })
+
+-- Oil.nvim設定グループ
+local oil_group = augroup("OilPreview", { clear = true })
+
+-- Oilバッファを開いた時に自動的にプレビューを表示
+autocmd("FileType", {
+  group = oil_group,
+  pattern = "oil",
+  callback = function()
+    -- 少し遅延させてからプレビューを開く（バッファが完全に読み込まれてから）
+    vim.defer_fn(function()
+      -- プレビューウィンドウが既に開いているかチェック
+      local has_preview = false
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.wo[win].previewwindow then
+          has_preview = true
+          break
+        end
+      end
+
+      -- プレビューウィンドウがまだ開いていない場合のみ開く
+      if not has_preview then
+        pcall(function()
+          require("oil.actions").preview.callback()
+        end)
+      end
+    end, 100)
+  end,
+})
