@@ -11,6 +11,9 @@ return {
       ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
       ["<C-e>"] = { "hide" },
       ["<C-y>"] = { "select_and_accept" },
+      
+      -- Enterキーで補完を確定
+      ["<CR>"] = { "accept", "fallback" },
 
       ["<C-p>"] = { "select_prev", "fallback" },
       ["<C-n>"] = { "select_next", "fallback" },
