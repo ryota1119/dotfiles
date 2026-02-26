@@ -12,6 +12,7 @@ return {
         "ruby_lsp",
         "pyright",
         "ts_ls",
+        "terraformls",
       },
       -- Masonでインストール可能なサーバーは自動インストール
       automatic_installation = true,

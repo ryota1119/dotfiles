@@ -226,3 +226,97 @@ mise-fzf() {
   echo "Installing $tool@$version..."
   mise install "$tool@$version"
 }
+
+# =============================================================================
+# Neovim/Markdown関連関数
+# =============================================================================
+
+# Markdownファイルをneovimで開いてプレビューを起動
+mdp() {
+  if [ $# -eq 0 ]; then
+    echo "使い方: mdp <markdown_file>"
+    echo "例: mdp README.md"
+    return 1
+  fi
+
+  local file="$1"
+  
+  if [ ! -f "$file" ]; then
+    echo "エラー: ファイルが見つかりません: $file"
+    return 1
+  fi
+
+  # Markdownファイルかチェック（拡張子）
+  if [[ ! "$file" =~ \.(md|markdown)$ ]]; then
+    echo "警告: $file はMarkdownファイルではないかもしれません"
+  fi
+
+  # neovimでファイルを開いてMarkdownPreviewを起動
+  nvim -c "MarkdownPreview" "$file"
+}
+
+# カレントディレクトリ以下のMarkdownファイルをfzfで選択してプレビュー
+mdp-fzf() {
+  local file
+  
+  # カレントディレクトリ以下のMarkdownファイルを検索（プレビュー付き）
+  file=$(find . -type f \( -name "*.md" -o -name "*.markdown" \) 2>/dev/null \
+    | sed 's|^\./||' \
+    | fzf --prompt "Markdown File: " \
+          --preview 'bat --style=numbers --color=always {}' \
+          --preview-window=right:60%:wrap)
+  
+  if [ -z "$file" ]; then
+    echo "キャンセルされました"
+    return
+  fi
+  
+  # neovimでファイルを開いてMarkdownPreviewを起動
+  nvim -c "MarkdownPreview" "$file"
+}
+
+# Markdownファイルを新規作成してneovimで開く
+mdnew() {
+  local filename="$1"
+  
+  if [ -z "$filename" ]; then
+    echo "使い方: mdnew <filename>"
+    echo "例: mdnew note.md"
+    return 1
+  fi
+  
+  # 拡張子がない場合は.mdを追加
+  if [[ ! "$filename" =~ \.(md|markdown)$ ]]; then
+    filename="${filename}.md"
+  fi
+  
+  # ファイルが既に存在する場合は警告
+  if [ -f "$filename" ]; then
+    echo "警告: $filename は既に存在します"
+    read -q "REPLY?上書きしますか？ (y/n) "
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      return 0
+    fi
+  fi
+  
+  # テンプレートを作成
+  cat > "$filename" << 'EOF'
+# タイトル
+
+## 概要
+
+ここに内容を書く
+
+## セクション1
+
+内容
+
+## セクション2
+
+内容
+EOF
+  
+  echo "作成しました: $filename"
+  nvim -c "MarkdownPreview" "$filename"
+}

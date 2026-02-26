@@ -9,6 +9,7 @@ vim.lsp.enable({
   "ruby_lsp",
   "pyright",
   "ts_ls",
+  "terraformls",
 })
 
 -- 言語サーバーがアタッチされた時に呼ばれる
