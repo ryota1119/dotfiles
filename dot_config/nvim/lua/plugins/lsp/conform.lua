@@ -33,6 +33,8 @@ return {
       go = { "goimports", "gofmt" },
       rust = { "rustfmt" },
       sh = { "shfmt" },
+      terraform = { "terraform_fmt" },
+      ["terraform-vars"] = { "terraform_fmt" },
     },
 
     -- 保存時に自動フォーマット
