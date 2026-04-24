@@ -16,6 +16,11 @@ setopt nonomatch
 setopt RM_STAR_SILENT
 ZLE_REMOVE_SUFFIX_CHARS=$''
 
+# キーバインド
+# EDITOR=vim により zsh が自動で vi モードを選ぶのを打ち消し、emacs モードを使う
+# （^R での history-incremental-search-backward を有効化するため）
+bindkey -e
+
 # 色の設定
 autoload -Uz colors && colors
 
