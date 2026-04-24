@@ -3,6 +3,7 @@ return {
   event = "InsertEnter",
   dependencies = {
     "rafamadriz/friendly-snippets",
+    "L3MON4D3/LuaSnip",
   },
   version = "*",
   opts = {
@@ -11,7 +12,7 @@ return {
       ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
       ["<C-e>"] = { "hide" },
       ["<C-y>"] = { "select_and_accept" },
-      
+
       -- Enterキーで補完を確定
       ["<CR>"] = { "accept", "fallback" },
 
@@ -33,6 +34,10 @@ return {
     sources = {
       default = { "lsp", "path", "snippets", "buffer" },
     },
+
+    -- スニペット展開は LuaSnip に委譲
+    -- （vim.snippet は ${4:raise $3} のようなネスト記法のパースが不安定なため）
+    snippets = { preset = "luasnip" },
 
     completion = {
       accept = {
