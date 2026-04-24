@@ -18,7 +18,6 @@ return {
     { "<leader>fc", "<cmd>Telescope commands<cr>", desc = "Commands" },
     { "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
     { "<leader>fs", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Buffer Search" },
-    { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics (errors & warnings)" },
   },
   config = function()
     local telescope = require("telescope")

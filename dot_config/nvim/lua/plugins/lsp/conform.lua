@@ -33,17 +33,30 @@ return {
       go = { "goimports", "gofmt" },
       rust = { "rustfmt" },
       sh = { "shfmt" },
-      terraform = { "terraform_fmt" },
-      ["terraform-vars"] = { "terraform_fmt" },
     },
 
     -- 保存時に自動フォーマット
-    format_on_save = {
-      -- タイムアウト時間（ミリ秒）
-      timeout_ms = 500,
-      -- LSPフォーマッターにフォールバック
-      lsp_fallback = true,
-    },
+    format_on_save = function(bufnr)
+      -- Python は black/isort の起動が重くタイムアウトしやすいので
+      -- 同期フォーマットはスキップし、後続の非同期フォーマットで処理する
+      if vim.bo[bufnr].filetype == "python" then
+        return nil
+      end
+      return {
+        timeout_ms = 3000,
+        lsp_fallback = true,
+      }
+    end,
+
+    -- Python など時間のかかるフォーマッターは保存後に非同期で実行する
+    format_after_save = function(bufnr)
+      if vim.bo[bufnr].filetype ~= "python" then
+        return nil
+      end
+      return {
+        lsp_fallback = true,
+      }
+    end,
 
     -- フォーマッター設定のカスタマイズ
     formatters = {

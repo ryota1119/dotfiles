@@ -67,39 +67,16 @@ return {
     -- ターミナルを開いたときに自動的にキーマップを設定
     vim.cmd("autocmd! TermOpen term://*toggleterm#* lua set_terminal_keymaps()")
 
-    -- カスタムターミナルの例: lazygit
-    local Terminal = require("toggleterm.terminal").Terminal
-    local lazygit = Terminal:new({
-      cmd = "lazygit",
-      dir = "git_dir",
-      direction = "float",
-      float_opts = {
-        border = "double",
-      },
-      -- ターミナルを開いたときの処理
-      on_open = function(term)
-        vim.cmd("startinsert!")
-        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
-      end,
-      -- ターミナルを閉じたときの処理
-      on_close = function(term)
-        vim.cmd("startinsert!")
-      end,
-    })
-
-    function _LAZYGIT_TOGGLE()
-      lazygit:toggle()
-    end
-
-    -- lazygitのキーマップ
-    vim.api.nvim_set_keymap("n", "<leader>gg", "<cmd>lua _LAZYGIT_TOGGLE()<CR>", { noremap = true, silent = true, desc = "LazyGit" })
-
-    -- その他の便利なターミナルコマンド
-    -- 水平分割ターミナル
-    vim.api.nvim_set_keymap("n", "<leader>th", "<cmd>ToggleTerm size=15 direction=horizontal<CR>", { noremap = true, silent = true, desc = "水平分割ターミナル" })
-    -- 垂直分割ターミナル
-    vim.api.nvim_set_keymap("n", "<leader>tv", "<cmd>ToggleTerm size=80 direction=vertical<CR>", { noremap = true, silent = true, desc = "垂直分割ターミナル" })
-    -- フローティングターミナル
-    vim.api.nvim_set_keymap("n", "<leader>tf", "<cmd>ToggleTerm direction=float<CR>", { noremap = true, silent = true, desc = "フローティングターミナル" })
+    -- ターミナル系キーマップ
+    -- <leader>tt: フローティングターミナルのトグル（Toggle Terminal）
+    -- <leader>Th: 水平分割ターミナル（大文字Tは Terminal Split の意）
+    -- <leader>Tv: 垂直分割ターミナル
+    -- ※ lazygit は lazygit.nvim（<leader>gg）を使うためここからは削除
+    vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm direction=float<CR>",
+      { noremap = true, silent = true, desc = "フローティングターミナル" })
+    vim.keymap.set("n", "<leader>Th", "<cmd>ToggleTerm size=15 direction=horizontal<CR>",
+      { noremap = true, silent = true, desc = "水平分割ターミナル" })
+    vim.keymap.set("n", "<leader>Tv", "<cmd>ToggleTerm size=80 direction=vertical<CR>",
+      { noremap = true, silent = true, desc = "垂直分割ターミナル" })
   end,
 }

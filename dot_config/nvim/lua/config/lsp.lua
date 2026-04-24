@@ -1,6 +1,21 @@
 -- Neovim 0.11のネイティブLSP設定
 -- 参考: https://zenn.dev/ras96/articles/4d9d9493d29c06
 
+-- 診断（Diagnostics）の表示設定
+vim.diagnostic.config({
+  virtual_text = {
+    source = "if_many",
+    prefix = "●",
+  },
+  severity_sort = true,
+  float = {
+    border = "rounded",
+    source = "if_many",
+    header = "",
+    prefix = "",
+  },
+})
+
 -- 使用する言語サーバーを有効化
 vim.lsp.enable({
   -- nvim-lspconfigのプリセットを使用
@@ -103,8 +118,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- end
 
     -- Inlay hintsを有効化
+    -- <leader>ch（Code Hints）: <leader>th は toggleterm と競合するため移動
     if client:supports_method("textDocument/inlayHint") then
-      vim.keymap.set("n", "<leader>th", function()
+      vim.keymap.set("n", "<leader>ch", function()
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
       end, {
         buffer = buf,
