@@ -1,0 +1,62 @@
+# =============================================================================
+# fzf 連携設定
+# =============================================================================
+# 前提: brew install fzf（fzf 0.48 以降で `fzf --zsh` をサポート）
+#
+# 提供されるキーバインド:
+#   Ctrl+R  : コマンド履歴のあいまい検索
+#   Ctrl+T  : カレント配下のファイル/ディレクトリを選択して貼り付け
+#   Alt+C   : カレント配下のディレクトリに移動
+#   **<TAB> : 任意コマンドの引数補完（例: `cd **<TAB>`, `kill **<TAB>`）
+
+if command -v fzf >/dev/null 2>&1; then
+  # ---------------------------------------------------------------------------
+  # 既定の検索コマンド（.gitignore を尊重、隠しファイルも含める）
+  # ---------------------------------------------------------------------------
+  if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+  fi
+
+  # ---------------------------------------------------------------------------
+  # 見た目と操作感
+  # ---------------------------------------------------------------------------
+  export FZF_DEFAULT_OPTS="\
+--height=60% \
+--layout=reverse \
+--border=rounded \
+--info=inline \
+--prompt='❯ ' \
+--pointer='▶' \
+--marker='✓' \
+--bind=ctrl-u:preview-half-page-up \
+--bind=ctrl-d:preview-half-page-down \
+--bind=ctrl-/:toggle-preview"
+
+  # Ctrl+T のプレビュー
+  #   ディレクトリ: tree でカラー表示
+  #   ファイル    : bat があればシンタックスハイライト、無ければ head にフォールバック
+  if command -v bat >/dev/null 2>&1 && command -v tree >/dev/null 2>&1; then
+    export FZF_CTRL_T_OPTS="--preview '\
+if [ -d {} ]; then tree -C {} | head -100; \
+else bat --style=numbers --color=always --line-range=:200 {} 2>/dev/null || head -100 {}; fi'"
+  elif command -v tree >/dev/null 2>&1; then
+    export FZF_CTRL_T_OPTS="--preview '\
+if [ -d {} ]; then tree -C {} | head -100; \
+else head -100 {} 2>/dev/null; fi'"
+  fi
+
+  # Alt+C のプレビュー（ディレクトリを tree 表示）
+  if command -v tree >/dev/null 2>&1; then
+    export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -100'"
+  fi
+
+  # Ctrl+R は履歴検索なのでプレビュー不要。高さだけ大きめに。
+  export FZF_CTRL_R_OPTS="--height=80% --preview-window=hidden"
+
+  # ---------------------------------------------------------------------------
+  # キーバインド + 補完を有効化（fzf 0.48 以降の公式推奨）
+  # ---------------------------------------------------------------------------
+  source <(fzf --zsh)
+fi
