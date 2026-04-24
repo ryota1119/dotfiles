@@ -1,0 +1,48 @@
+{{- /* Homebrew prefix（macOS Apple Silicon / Intel / Linuxbrew 対応） */ -}}
+{{- $brewPrefix := "/opt/homebrew" -}}
+{{- if and (eq .chezmoi.os "darwin") (eq .chezmoi.arch "amd64") -}}
+{{-   $brewPrefix = "/usr/local" -}}
+{{- else if eq .chezmoi.os "linux" -}}
+{{-   $brewPrefix = "/home/linuxbrew/.linuxbrew" -}}
+{{- end -}}
+# =============================================================================
+# Zsh設定ファイル
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 基本設定
+# -----------------------------------------------------------------------------
+setopt nonomatch
+setopt RM_STAR_SILENT
+ZLE_REMOVE_SUFFIX_CHARS=$''
+
+# 色の設定
+autoload -Uz colors && colors
+
+# 環境変数
+export CLICOLOR=1
+export TERM=xterm-256color
+
+# -----------------------------------------------------------------------------
+# 設定ファイルの読み込み（順序が重要）
+#   env       : PATH/環境変数（他ファイルから参照されるため最初）
+#   completion: 補完（Homebrew/Docker 等の fpath を含む）
+#   alias     : エイリアス
+#   functions : 関数
+#   prompt    : プロンプト（precmd を最後に登録）
+# -----------------------------------------------------------------------------
+source ~/.zsh/env.zsh
+source ~/.zsh/completion.zsh
+source ~/.zsh/alias.zsh
+source ~/.zsh/functions.zsh
+source ~/.zsh/prompt.zsh
+
+# -----------------------------------------------------------------------------
+# Google Cloud SDK
+# -----------------------------------------------------------------------------
+if [ -f '{{ $brewPrefix }}/share/google-cloud-sdk/path.zsh.inc' ]; then
+  source '{{ $brewPrefix }}/share/google-cloud-sdk/path.zsh.inc'
+fi
+if [ -f '{{ $brewPrefix }}/share/google-cloud-sdk/completion.zsh.inc' ]; then
+  source '{{ $brewPrefix }}/share/google-cloud-sdk/completion.zsh.inc'
+fi
