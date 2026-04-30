@@ -1,3 +1,9 @@
+-- リーダーキーは keymap を登録する前に必ず設定する。
+-- vim.keymap.set の <leader> はこの時点の値で展開されるため、
+-- config.keymaps や lazy.nvim の keys = {} より先に設定する必要がある。
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
 -- 使わない provider を無効化（:checkhealth の警告抑制）
 -- Lua/JS/TS/Python は LSP で扱うため、Neovim の旧 RPC provider は不要
 vim.g.loaded_python3_provider = 0

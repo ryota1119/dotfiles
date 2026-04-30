@@ -15,8 +15,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- mapleader / maplocalleader は init.lua で設定済み
--- （keymaps.lua より前に設定しないと <leader> が正しく展開されないため）
+-- mapleader / maplocalleader は init.lua で設定済み（保険として再設定）。
+-- :h <leader> のとおり keymap 登録時に展開される定数なので、必ず先に設定する。
+vim.g.mapleader = vim.g.mapleader or " "
+vim.g.maplocalleader = vim.g.maplocalleader or "\\"
 
 -- Setup lazy.nvim
 require("lazy").setup({
