@@ -37,6 +37,11 @@ require("lazy").setup({
     enabled = true,
     notify = false,
   },
+  -- luarocks 必須プラグインを使っていないため hererocks を無効化（警告抑制）
+  rocks = {
+    enabled = false,
+    hererocks = false,
+  },
   performance = {
     rtp = {
       disabled_plugins = {

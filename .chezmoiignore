@@ -1,0 +1,2 @@
+# lazy.nvim のロックファイルはマシンごとに変動するため chezmoi 管理外にする
+.config/nvim/lazy-lock.json

@@ -1,3 +1,10 @@
+-- 使わない provider を無効化（:checkhealth の警告抑制）
+-- Lua/JS/TS/Python は LSP で扱うため、Neovim の旧 RPC provider は不要
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+
 -- 壊れた snippet による Neovim 0.12 のパースエラーを握りつぶす安全弁。
 -- 一部の VSCode 形式 snippet（friendly-snippets の python tryef 等）には
 -- ${2: ${3:Exception} as ${4:e}} のような入れ子プレースホルダが含まれ、

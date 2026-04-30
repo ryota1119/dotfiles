@@ -1,41 +1,46 @@
+-- nvim-treesitter (master ブランチの安定版 API を使用)
+-- main ブランチは破壊的変更の真っ最中で周辺プラグインの追従が進んでいないため、
+-- 当面は master ブランチ（v1.x 系）で運用する。
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "main", -- 重要: mainブランチを明示
+    branch = "master",
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" }, -- 遅延読み込みの設定
-    config = function()
-      -- 新仕様では、setup関数は「パーサの管理」のみを行います
-      require("nvim-treesitter").setup({
-        -- インストールしておくべき言語パーサのリスト
-        ensure_installed = {
-          "bash",
-          "c",
-          "diff",
-          "html",
-          "javascript",
-          "jsdoc",
-          "json",
-          "jsonc",
-          "lua",
-          "luadoc",
-          "markdown",
-          "markdown_inline",
-          "python",
-          "query",
-          "regex",
-          "ruby",
-          "toml",
-          "tsx",
-          "typescript",
-          "vim",
-          "vimdoc",
-          "yaml",
-        },
-        
-        -- 未インストールの言語ファイルを開いた時に自動でインストールするか
-        auto_install = true,
-      })
-    end,
+    event = { "BufReadPost", "BufNewFile" },
+    main = "nvim-treesitter.configs",
+    opts = {
+      ensure_installed = {
+        "bash",
+        "c",
+        "diff",
+        "html",
+        "javascript",
+        "jsdoc",
+        "json",
+        "jsonc",
+        "lua",
+        "luadoc",
+        "markdown",
+        "markdown_inline",
+        "python",
+        "query",
+        "regex",
+        "ruby",
+        "toml",
+        "tsx",
+        "typescript",
+        "vim",
+        "vimdoc",
+        "yaml",
+      },
+      auto_install = true,
+      highlight = {
+        enable = true,
+        additional_vim_regex_highlighting = false,
+      },
+      indent = {
+        enable = true,
+      },
+    },
   },
 }

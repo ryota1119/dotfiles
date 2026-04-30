@@ -7,12 +7,25 @@ local autocmd = vim.api.nvim_create_autocmd
 local general = augroup("General", { clear = true })
 
 -- ファイル保存時に末尾の空白を削除
+-- - modifiable でないバッファ（help, checkhealth, terminal 等）はスキップ
+-- - 一部の filetype では末尾空白に意味があるためスキップ
 autocmd("BufWritePre", {
   group = general,
   pattern = "*",
-  callback = function()
+  callback = function(args)
+    if not vim.bo[args.buf].modifiable then
+      return
+    end
+    local skipped_filetypes = {
+      ["diff"] = true,
+      ["gitcommit"] = true,
+      ["markdown"] = true,
+    }
+    if skipped_filetypes[vim.bo[args.buf].filetype] then
+      return
+    end
     local save_cursor = vim.fn.getpos(".")
-    vim.cmd([[%s/\s\+$//e]])
+    pcall(vim.cmd, [[%s/\s\+$//e]])
     vim.fn.setpos(".", save_cursor)
   end,
 })
