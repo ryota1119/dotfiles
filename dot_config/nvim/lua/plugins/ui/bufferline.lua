@@ -35,14 +35,7 @@ return {
           local icon = level:match("error") and " " or " "
           return " " .. icon .. count
         end,
-        offsets = {
-          {
-            filetype = "NvimTree",
-            text = "File Explorer",
-            text_align = "center",
-            separator = true,
-          },
-        },
+        offsets = {},
         color_icons = true,
         show_buffer_icons = true,
         show_buffer_close_icons = true,

@@ -309,7 +309,8 @@ nvim
 
 - **lua_ls** - Lua
 - **ruby_lsp** - Ruby
-- **pyright** - Python
+- **basedpyright** - Python (型チェック・補完)
+- **ruff** - Python (lint・format・import 整理)
 - **ts_ls** - TypeScript/JavaScript
 - **terraformls** - Terraform
 
@@ -321,7 +322,8 @@ nvim
 ensure_installed = {
   "lua_ls",
   "ruby_lsp",
-  "pyright",
+  "basedpyright",
+  "ruff",
   "ts_ls",
   "terraformls",
   "rust_analyzer",  -- 例: Rust
@@ -336,7 +338,7 @@ ensure_installed = {
 
 **サポートされている言語:**
 - Lua (stylua)
-- Python (isort, black)
+- Python (ruff: lint + format + import 整理を一本化)
 - JavaScript/TypeScript (prettier)
 - Ruby (rubocop)
 - Go (goimports, gofmt)
@@ -350,7 +352,7 @@ ensure_installed = {
 ```lua
 formatters_by_ft = {
   lua = { "stylua" },
-  python = { "isort", "black" },
+  python = { "ruff_organize_imports", "ruff_format" },
   -- 新しい言語を追加
   rust = { "rustfmt" },
 },

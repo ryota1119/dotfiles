@@ -2,11 +2,11 @@ return {
   "windwp/nvim-autopairs",
   event = "InsertEnter",
   opts = {
-    check_ts = true, -- treesitterと統合
+    check_ts = true,
     ts_config = {
-      lua = { "string" }, -- Lua文字列内では無効化
+      lua = { "string" },
       javascript = { "template_string" },
-      java = false, -- Javaでは無効化
+      java = false,
     },
     disable_filetype = { "TelescopePrompt", "vim" },
     fast_wrap = {
@@ -20,5 +20,4 @@ return {
       highlight_grey = "Comment",
     },
   },
-  opts = opts,
 }

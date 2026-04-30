@@ -1,0 +1,17 @@
+{
+  "TODO": {
+    "prefix": "todo",
+    "body": ["TODO(${1:owner}): ${2:description}"],
+    "description": "TODO comment"
+  },
+  "FIXME": {
+    "prefix": "fixme",
+    "body": ["FIXME(${1:owner}): ${2:description}"],
+    "description": "FIXME comment"
+  },
+  "Date (ISO)": {
+    "prefix": "date",
+    "body": ["${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}"],
+    "description": "current ISO date"
+  }
+}

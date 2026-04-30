@@ -1,21 +1,20 @@
 return {
   "williamboman/mason-lspconfig.nvim",
+  event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     "williamboman/mason.nvim",
     "neovim/nvim-lspconfig",
   },
-  config = function()
-    require("mason-lspconfig").setup({
-      -- vim.lsp.enable()で指定した言語サーバーを自動インストール
-      ensure_installed = {
-        "lua_ls",
-        "ruby_lsp",
-        "pyright",
-        "ts_ls",
-        "terraformls",
-      },
-      -- Masonでインストール可能なサーバーは自動インストール
-      automatic_installation = true,
-    })
-  end,
+  opts = {
+    -- vim.lsp.enable() で有効化する言語サーバーを自動インストール
+    ensure_installed = {
+      "lua_ls",
+      "ruby_lsp",
+      "basedpyright",
+      "ruff",
+      "ts_ls",
+      "terraformls",
+    },
+    automatic_installation = true,
+  },
 }

@@ -1,30 +1,46 @@
--- Neovim 0.11のネイティブLSP設定
+-- Neovim 0.11+ のネイティブ LSP 設定
 -- 参考: https://zenn.dev/ras96/articles/4d9d9493d29c06
 
--- 診断（Diagnostics）の表示設定
+-- 使用する言語サーバーを有効化（after/lsp/<name>.lua で個別設定を上書き）
+vim.lsp.enable({
+  "lua_ls",
+  "ruby_lsp",
+  "basedpyright",
+  "ruff",
+  "ts_ls",
+  "terraformls",
+})
+
+-- 診断 (diagnostics) UI のモダン構成
 vim.diagnostic.config({
+  -- 行末にエラーメッセージを薄く表示。長文はカット
   virtual_text = {
-    source = "if_many",
     prefix = "●",
+    spacing = 2,
+    source = "if_many",
   },
+  -- サインカラムにアイコン
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = " ",
+      [vim.diagnostic.severity.WARN] = " ",
+      [vim.diagnostic.severity.HINT] = " ",
+      [vim.diagnostic.severity.INFO] = " ",
+    },
+  },
+  -- 重要度の高いものを上に
   severity_sort = true,
+  -- 下線
+  underline = true,
+  -- 入力中はチラつかせない
+  update_in_insert = false,
+  -- :h vim.diagnostic.open_float() のデフォルト
   float = {
     border = "rounded",
     source = "if_many",
     header = "",
     prefix = "",
   },
-})
-
--- 使用する言語サーバーを有効化
-vim.lsp.enable({
-  -- nvim-lspconfigのプリセットを使用
-  "lua_ls",
-  -- 他の言語サーバーをここに追加
-  "ruby_lsp",
-  "pyright",
-  "ts_ls",
-  "terraformls",
 })
 
 -- 言語サーバーがアタッチされた時に呼ばれる
@@ -34,108 +50,84 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
     local buf = args.buf
 
-    -- デフォルトのキーマップに追加設定
-    -- Neovim 0.11では多くのキーマップがデフォルトで設定されている
-    -- See :help lsp-defaults
+    local function map(mode, lhs, rhs, desc)
+      vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
+    end
 
-    -- 定義へジャンプ
+    -- ジャンプ系（Neovim 0.11+ のデフォルト :help lsp-defaults を補強）
     if client:supports_method("textDocument/definition") then
-      vim.keymap.set("n", "gd", vim.lsp.buf.definition, {
-        buffer = buf,
-        desc = "Go to definition",
-      })
+      map("n", "gd", vim.lsp.buf.definition, "Go to definition")
     end
-
-    -- ホバードキュメント
-    if client:supports_method("textDocument/hover") then
-      vim.keymap.set("n", "K", function()
-        vim.lsp.buf.hover({ border = "rounded" })
-      end, {
-        buffer = buf,
-        desc = "Show hover documentation",
-      })
+    if client:supports_method("textDocument/declaration") then
+      map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
     end
-
-    -- 参照を表示
     if client:supports_method("textDocument/references") then
-      vim.keymap.set("n", "gr", vim.lsp.buf.references, {
-        buffer = buf,
-        desc = "Go to references",
-      })
+      map("n", "gr", vim.lsp.buf.references, "Go to references")
     end
-
-    -- 実装へジャンプ
     if client:supports_method("textDocument/implementation") then
-      vim.keymap.set("n", "gI", vim.lsp.buf.implementation, {
-        buffer = buf,
-        desc = "Go to implementation",
-      })
+      map("n", "gI", vim.lsp.buf.implementation, "Go to implementation")
     end
-
-    -- 型定義へジャンプ
     if client:supports_method("textDocument/typeDefinition") then
-      vim.keymap.set("n", "gy", vim.lsp.buf.type_definition, {
-        buffer = buf,
-        desc = "Go to type definition",
-      })
+      map("n", "gy", vim.lsp.buf.type_definition, "Go to type definition")
     end
 
-    -- コードアクション
+    -- ホバー
+    if client:supports_method("textDocument/hover") then
+      map("n", "K", function()
+        vim.lsp.buf.hover({ border = "rounded" })
+      end, "Hover documentation")
+    end
+
+    -- シグネチャヘルプ
+    if client:supports_method("textDocument/signatureHelp") then
+      map("i", "<C-k>", vim.lsp.buf.signature_help, "Signature help")
+    end
+
+    -- <leader>c* = Code / LSP
     if client:supports_method("textDocument/codeAction") then
-      vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, {
-        buffer = buf,
-        desc = "Code action",
-      })
+      map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "Code action")
     end
-
-    -- リネーム
     if client:supports_method("textDocument/rename") then
-      vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, {
-        buffer = buf,
-        desc = "Rename",
-      })
+      map("n", "<leader>cr", vim.lsp.buf.rename, "Rename symbol")
+    end
+    map("n", "<leader>cf", function()
+      require("conform").format({ async = true, lsp_fallback = true })
+    end, "Format buffer")
+    map("v", "<leader>cf", function()
+      require("conform").format({ async = true, lsp_fallback = true })
+    end, "Format selection")
+    map("n", "<leader>cd", vim.diagnostic.open_float, "Line diagnostics")
+    map("n", "<leader>cl", "<cmd>LspInfo<cr>", "LSP info")
+    -- <leader>cm = Mason は mason.lua 側の keys で定義済み
+    if client:supports_method("textDocument/documentSymbol") then
+      map("n", "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", "Document symbols")
+    end
+    if client:supports_method("workspace/symbol") then
+      map("n", "<leader>cS", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", "Workspace symbols")
     end
 
-    -- ネイティブ補完を有効化
-    -- blink.cmpを使用するためコメントアウト
-    -- if client:supports_method("textDocument/completion") then
-    --   vim.lsp.completion.enable(true, client.id, buf, { autotrigger = true })
-    -- end
+    -- 診断ナビゲーション
+    map("n", "[d", function()
+      vim.diagnostic.jump({ count = -1, float = true })
+    end, "Previous diagnostic")
+    map("n", "]d", function()
+      vim.diagnostic.jump({ count = 1, float = true })
+    end, "Next diagnostic")
 
-    -- 保存時に自動フォーマット
-    -- conform.nvimを使用するためコメントアウト
-    -- if
-    --   not client:supports_method("textDocument/willSaveWaitUntil")
-    --   and client:supports_method("textDocument/formatting")
-    -- then
-    --   vim.api.nvim_create_autocmd("BufWritePre", {
-    --     group = vim.api.nvim_create_augroup("my-lsp-format", { clear = false }),
-    --     buffer = buf,
-    --     callback = function()
-    --       vim.lsp.buf.format({ bufnr = buf, id = client.id, timeout_ms = 1000 })
-    --     end,
-    --   })
-    -- end
-
-    -- Inlay hintsを有効化
-    -- <leader>ch（Code Hints）: <leader>th は toggleterm と競合するため移動
+    -- Toggle 系（<leader>t* に統一）
     if client:supports_method("textDocument/inlayHint") then
-      vim.keymap.set("n", "<leader>ch", function()
+      map("n", "<leader>tH", function()
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-      end, {
-        buffer = buf,
-        desc = "Toggle inlay hints",
-      })
+      end, "Toggle inlay hints")
     end
 
-    -- インライン補完（GitHub Copilot用など）
+    -- インライン補完（Copilot 等を LSP で扱う場合）
     if client:supports_method("textDocument/inlineCompletion") then
       vim.lsp.inline_completion.enable(true, { bufnr = buf })
       vim.keymap.set("i", "<Tab>", function()
         if not vim.lsp.inline_completion.get() then
           return "<Tab>"
         end
-        -- 補完ポップアップが開いていたら閉じる
         if vim.fn.pumvisible() == 1 then
           return "<C-e>"
         end

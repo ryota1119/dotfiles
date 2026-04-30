@@ -1,11 +1,17 @@
+-- blink.cmp の補完設定（2026年版モダン構成）
+--
+-- スニペット方針:
+--   * Neovim 0.10+ のネイティブ vim.snippet を blink.cmp の標準 snippets プリセットで使う
+--   * friendly-snippets は壊れた snippet（python tryef 等）が混ざるため不採用
+--   * LuaSnip は導入せず、必要なスニペットは LSP（basedpyright/ruff/ts_ls等）に任せる
+--   * プロジェクト独自スニペットを置きたい場合は ~/.config/nvim/snippets/ に
+--     VSCode形式で置くと自動で読まれる
+
 return {
   "saghen/blink.cmp",
   event = "InsertEnter",
-  dependencies = {
-    "rafamadriz/friendly-snippets",
-    "L3MON4D3/LuaSnip",
-  },
   version = "*",
+
   opts = {
     keymap = {
       preset = "default",
@@ -13,7 +19,6 @@ return {
       ["<C-e>"] = { "hide" },
       ["<C-y>"] = { "select_and_accept" },
 
-      -- Enterキーで補完を確定
       ["<CR>"] = { "accept", "fallback" },
 
       ["<C-p>"] = { "select_prev", "fallback" },
@@ -31,13 +36,25 @@ return {
       nerd_font_variant = "mono",
     },
 
-    sources = {
-      default = { "lsp", "path", "snippets", "buffer" },
+    snippets = {
+      preset = "default",
     },
 
-    -- スニペット展開は LuaSnip に委譲
-    -- （vim.snippet は ${4:raise $3} のようなネスト記法のパースが不安定なため）
-    snippets = { preset = "luasnip" },
+    sources = {
+      default = { "lsp", "path", "snippets", "buffer" },
+      providers = {
+        snippets = {
+          opts = {
+            -- VSCode形式の snippet 探索先。chezmoi管理下のみを既定にして
+            -- 想定外の壊れた snippet が混入しないようにする。
+            -- VSCodeとユーザースニペットを共有したい場合のみ search_paths に
+            --   vim.fn.expand("~/Library/Application Support/Code/User/snippets")
+            -- を足す。
+            search_paths = { vim.fn.stdpath("config") .. "/snippets" },
+          },
+        },
+      },
+    },
 
     completion = {
       accept = {

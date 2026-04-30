@@ -2,21 +2,23 @@ return {
   "stevearc/conform.nvim",
   event = { "BufWritePre" },
   cmd = { "ConformInfo" },
+  -- <leader>cf は LSP attach 側でフォーマット可能なバッファに対してのみ
+  -- 設定する。conform 単独の keys は LSP 非対応の言語でも使えるよう保険として残す。
   keys = {
     {
-      "<leader>cf",
+      "<leader>cF",
       function()
         require("conform").format({ async = true, lsp_fallback = true })
       end,
       mode = { "n", "v" },
-      desc = "Format buffer",
+      desc = "Format (conform)",
     },
   },
   opts = {
     -- ファイルタイプごとのフォーマッター設定
     formatters_by_ft = {
       lua = { "stylua" },
-      python = { "isort", "black" },
+      python = { "ruff_organize_imports", "ruff_format" },
       javascript = { "prettier" },
       typescript = { "prettier" },
       javascriptreact = { "prettier" },
@@ -33,30 +35,18 @@ return {
       go = { "goimports", "gofmt" },
       rust = { "rustfmt" },
       sh = { "shfmt" },
+      terraform = { "terraform_fmt" },
+      ["terraform-vars"] = { "terraform_fmt" },
     },
 
     -- 保存時に自動フォーマット
-    format_on_save = function(bufnr)
-      -- Python は black/isort の起動が重くタイムアウトしやすいので
-      -- 同期フォーマットはスキップし、後続の非同期フォーマットで処理する
-      if vim.bo[bufnr].filetype == "python" then
-        return nil
-      end
-      return {
-        timeout_ms = 3000,
-        lsp_fallback = true,
-      }
-    end,
-
-    -- Python など時間のかかるフォーマッターは保存後に非同期で実行する
-    format_after_save = function(bufnr)
-      if vim.bo[bufnr].filetype ~= "python" then
-        return nil
-      end
-      return {
-        lsp_fallback = true,
-      }
-    end,
+    format_on_save = {
+      -- タイムアウト時間（ミリ秒）
+      -- ruff は高速だが、Pythonインタプリタ経由のフォーマッタも考慮して余裕を持たせる
+      timeout_ms = 3000,
+      -- LSPフォーマッターにフォールバック
+      lsp_fallback = true,
+    },
 
     -- フォーマッター設定のカスタマイズ
     formatters = {

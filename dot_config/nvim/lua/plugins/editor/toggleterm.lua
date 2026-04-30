@@ -67,16 +67,16 @@ return {
     -- ターミナルを開いたときに自動的にキーマップを設定
     vim.cmd("autocmd! TermOpen term://*toggleterm#* lua set_terminal_keymaps()")
 
-    -- ターミナル系キーマップ
-    -- <leader>tt: フローティングターミナルのトグル（Toggle Terminal）
-    -- <leader>Th: 水平分割ターミナル（大文字Tは Terminal Split の意）
-    -- <leader>Tv: 垂直分割ターミナル
-    -- ※ lazygit は lazygit.nvim（<leader>gg）を使うためここからは削除
+    -- ターミナルキーマップ
+    --   <leader>tt = floating terminal
+    --   <leader>tx = horizontal terminal (split)
+    --   <leader>tv = vertical terminal
+    -- lazygit は lazygit.nvim 側で <leader>gg に統一
     vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm direction=float<CR>",
-      { noremap = true, silent = true, desc = "フローティングターミナル" })
-    vim.keymap.set("n", "<leader>Th", "<cmd>ToggleTerm size=15 direction=horizontal<CR>",
-      { noremap = true, silent = true, desc = "水平分割ターミナル" })
-    vim.keymap.set("n", "<leader>Tv", "<cmd>ToggleTerm size=80 direction=vertical<CR>",
-      { noremap = true, silent = true, desc = "垂直分割ターミナル" })
+      { noremap = true, silent = true, desc = "Floating terminal" })
+    vim.keymap.set("n", "<leader>tx", "<cmd>ToggleTerm size=15 direction=horizontal<CR>",
+      { noremap = true, silent = true, desc = "Horizontal terminal" })
+    vim.keymap.set("n", "<leader>tv", "<cmd>ToggleTerm size=80 direction=vertical<CR>",
+      { noremap = true, silent = true, desc = "Vertical terminal" })
   end,
 }
