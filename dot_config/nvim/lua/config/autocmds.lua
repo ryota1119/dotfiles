@@ -80,28 +80,40 @@ autocmd("FileType", {
 -- Oil.nvim設定グループ
 local oil_group = augroup("OilPreview", { clear = true })
 
--- Oilバッファを開いた時に自動的にプレビューを表示
+-- Oilバッファでカーソルがエントリ行に乗った最初のタイミングでプレビューを開く
+-- FileType 時点ではバッファ描画が未完了なため CursorMoved まで待つ
 autocmd("FileType", {
   group = oil_group,
   pattern = "oil",
-  callback = function()
-    -- 少し遅延させてからプレビューを開く（バッファが完全に読み込まれてから）
-    vim.defer_fn(function()
-      -- プレビューウィンドウが既に開いているかチェック
-      local has_preview = false
-      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-        if vim.wo[win].previewwindow then
-          has_preview = true
-          break
+  callback = function(args)
+    local opened = false
+    local id
+    id = vim.api.nvim_create_autocmd("CursorMoved", {
+      buffer = args.buf,
+      once = false,
+      callback = function()
+        if opened then
+          vim.api.nvim_del_autocmd(id)
+          return
         end
-      end
-
-      -- プレビューウィンドウがまだ開いていない場合のみ開く
-      if not has_preview then
-        pcall(function()
-          require("oil.actions").preview.callback()
-        end)
-      end
-    end, 100)
+        -- エントリが取得できる行にいる場合のみプレビューを開く
+        local ok, entry = pcall(require("oil").get_cursor_entry)
+        if ok and entry then
+          opened = true
+          vim.api.nvim_del_autocmd(id)
+          -- プレビューが既に開いていなければ開く
+          local has_preview = false
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            if vim.wo[win].previewwindow then
+              has_preview = true
+              break
+            end
+          end
+          if not has_preview then
+            pcall(require("oil.actions").preview.callback)
+          end
+        end
+      end,
+    })
   end,
 })
