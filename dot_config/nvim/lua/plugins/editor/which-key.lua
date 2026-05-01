@@ -1,6 +1,9 @@
 return {
   "folke/which-key.nvim",
   event = "VeryLazy",
+  dependencies = {
+    { "echasnovski/mini.icons", opts = {} },
+  },
   opts = {
     preset = "modern",
     delay = 300,
@@ -46,7 +49,6 @@ return {
       { "<leader>w", "<cmd>w<cr>", desc = "Save" },
       { "<leader>q", "<cmd>q<cr>", desc = "Quit" },
       { "<leader>h", "<cmd>nohlsearch<cr>", desc = "No highlight" },
-      { "<leader>e", vim.diagnostic.open_float, desc = "Diagnostics float" },
 
       -- Buffer
       { "<leader>bd", "<cmd>bdelete<cr>", desc = "Delete buffer" },

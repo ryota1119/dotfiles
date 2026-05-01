@@ -1,15 +1,20 @@
--- nvim-treesitter (master ブランチの安定版 API を使用)
--- main ブランチは破壊的変更の真っ最中で周辺プラグインの追従が進んでいないため、
--- 当面は master ブランチ（v1.x 系）で運用する。
+-- nvim-treesitter (main ブランチ / v2.x 系)
+-- master ブランチは 2025年にアーカイブ済み。
+-- main は完全な書き直しで Neovim 0.12+ 専用。lazy-loading 非対応。
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "master",
+    branch = "main",
+    lazy = false,
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
-    main = "nvim-treesitter.configs",
     opts = {
-      ensure_installed = {
+      install_dir = vim.fn.stdpath("data") .. "/site",
+    },
+    config = function(_, opts)
+      require("nvim-treesitter").setup(opts)
+
+      -- パーサーを自動インストール（非同期）
+      require("nvim-treesitter").install({
         "bash",
         "c",
         "diff",
@@ -17,7 +22,6 @@ return {
         "javascript",
         "jsdoc",
         "json",
-        "jsonc",
         "lua",
         "luadoc",
         "markdown",
@@ -32,15 +36,7 @@ return {
         "vim",
         "vimdoc",
         "yaml",
-      },
-      auto_install = true,
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = false,
-      },
-      indent = {
-        enable = true,
-      },
-    },
+      })
+    end,
   },
 }

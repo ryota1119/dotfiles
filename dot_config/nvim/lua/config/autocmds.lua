@@ -62,6 +62,21 @@ autocmd("TermOpen", {
   end,
 })
 
+-- Treesitter highlight / fold（main ブランチは自動では有効にならないため手動設定）
+local ts_group = augroup("TreesitterFeatures", { clear = true })
+autocmd("FileType", {
+  group = ts_group,
+  callback = function()
+    local ok = pcall(vim.treesitter.start)
+    if ok then
+      -- Treesitter ベースの折り畳み
+      vim.wo[0][0].foldmethod = "expr"
+      vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+      vim.wo[0][0].foldenable = false
+    end
+  end,
+})
+
 -- Oil.nvim設定グループ
 local oil_group = augroup("OilPreview", { clear = true })
 
