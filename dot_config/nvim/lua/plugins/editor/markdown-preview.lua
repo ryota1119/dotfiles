@@ -1,7 +1,9 @@
 return {
   "iamcco/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-  build = function()
+  build = function(plugin)
+    vim.opt.rtp:append(plugin.dir)
+    vim.cmd("runtime plugin/markdown-preview.vim")
     vim.fn["mkdp#util#install"]()
   end,
   init = function()
