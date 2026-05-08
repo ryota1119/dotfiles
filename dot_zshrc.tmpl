@@ -52,3 +52,10 @@ fi
 if [ -f '{{ $brewPrefix }}/share/google-cloud-sdk/completion.zsh.inc' ]; then
   source '{{ $brewPrefix }}/share/google-cloud-sdk/completion.zsh.inc'
 fi
+
+# -----------------------------------------------------------------------------
+# mise（言語ランタイム管理）
+# -----------------------------------------------------------------------------
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
