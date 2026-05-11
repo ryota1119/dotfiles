@@ -14,8 +14,8 @@ return {
       "prettier", -- JS/TS/JSON/YAML/Markdown
       "shfmt", -- Shell
       -- "rubocop", -- Ruby (オプション)
-      -- "goimports", -- Go (オプション)
-      -- "gofmt", -- Go (オプション)
+      "goimports", -- Go
+      "gofmt", -- Go
       -- "rustfmt", -- Rust (オプション)
 
       -- Linters（将来追加する場合）

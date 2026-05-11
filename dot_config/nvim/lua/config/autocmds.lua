@@ -62,6 +62,18 @@ autocmd("TermOpen", {
   end,
 })
 
+-- Go: タブインデント（gofmt標準に合わせる）
+local filetype_group = augroup("FileTypeSettings", { clear = true })
+autocmd("FileType", {
+  group = filetype_group,
+  pattern = "go",
+  callback = function()
+    vim.bo.tabstop = 4
+    vim.bo.shiftwidth = 4
+    vim.bo.expandtab = false
+  end,
+})
+
 -- Treesitter highlight / fold（main ブランチは自動では有効にならないため手動設定）
 local ts_group = augroup("TreesitterFeatures", { clear = true })
 autocmd("FileType", {

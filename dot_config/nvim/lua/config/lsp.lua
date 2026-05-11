@@ -9,6 +9,7 @@ vim.lsp.enable({
   "ruff",
   "ts_ls",
   "terraformls",
+  "gopls",
 })
 
 -- 診断 (diagnostics) UI のモダン構成

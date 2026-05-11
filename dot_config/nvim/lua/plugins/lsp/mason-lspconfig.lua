@@ -14,6 +14,7 @@ return {
       "ruff",
       "ts_ls",
       "terraformls",
+      "gopls",
     },
     automatic_installation = true,
   },
