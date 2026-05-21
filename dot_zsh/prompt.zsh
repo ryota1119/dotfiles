@@ -25,7 +25,14 @@ precmd() {
     fi
   fi
 
-  PROMPT="%F{032}%n%f:%F{250}$current_dir%f $git_info"$'\n'"%# "
+  # Python仮想環境情報を取得
+  local venv_info=""
+  if [ -n "$VIRTUAL_ENV" ]; then
+    local venv_name=$(basename "$VIRTUAL_ENV")
+    venv_info=" %F{cyan}[$venv_name]%f"
+  fi
+
+  PROMPT="%F{032}%n%f:%F{250}$current_dir%f $git_info$venv_info"$'\n'"%# "
 }
 
 # 右プロンプト
