@@ -4,6 +4,11 @@
 
 ---@type vim.lsp.Config
 return {
+  capabilities = {
+    general = {
+      positionEncodings = { "utf-8" },
+    },
+  },
   settings = {
     basedpyright = {
       analysis = {
