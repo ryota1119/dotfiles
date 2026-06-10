@@ -8,7 +8,7 @@ opt.fileencoding = "utf-8"
 
 -- 行番号
 opt.number = true          -- 行番号を表示
-opt.relativenumber = false -- 相対行番号を表示
+opt.relativenumber = true  -- 相対行番号を表示
 
 -- インデント
 opt.tabstop = 2       -- タブ文字の幅
@@ -62,3 +62,7 @@ opt.timeoutlen = 300      -- キーマップのタイムアウト時間（ms）
 -- その他
 opt.hidden = true         -- 保存せずにバッファを切り替え可能
 opt.iskeyword:append("-") -- ハイフンを単語の一部として扱う
+
+-- Ghostty連携: undercurl（波下線）対応
+vim.cmd([[let &t_Cs = "\e[4:3m"]])
+vim.cmd([[let &t_Ce = "\e[4:0m"]])
