@@ -7,8 +7,8 @@ opt.encoding = "utf-8"
 opt.fileencoding = "utf-8"
 
 -- 行番号
-opt.number = true          -- 行番号を表示
-opt.relativenumber = true  -- 相対行番号を表示
+opt.number = true           -- 行番号を表示
+opt.relativenumber = false  -- 絶対行番号（固定）
 
 -- インデント
 opt.tabstop = 2       -- タブ文字の幅
