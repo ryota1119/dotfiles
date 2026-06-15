@@ -2,15 +2,14 @@
 --
 -- スニペット方針:
 --   * Neovim 0.10+ のネイティブ vim.snippet を blink.cmp の標準 snippets プリセットで使う
---   * friendly-snippets は壊れた snippet（python tryef 等）が混ざるため不採用
---   * LuaSnip は導入せず、必要なスニペットは LSP（basedpyright/ruff/ts_ls等）に任せる
---   * プロジェクト独自スニペットを置きたい場合は ~/.config/nvim/snippets/ に
---     VSCode形式で置くと自動で読まれる
+--   * friendly-snippets でコミュニティスニペットを提供（runtimepath から自動検索）
+--   * LuaSnip は導入せず、プラグインレス構成を維持する
 
 return {
   "saghen/blink.cmp",
   event = "InsertEnter",
   version = "*",
+  dependencies = { "rafamadriz/friendly-snippets" },
 
   opts = {
     keymap = {
@@ -45,12 +44,10 @@ return {
       providers = {
         snippets = {
           opts = {
-            -- VSCode形式の snippet 探索先。chezmoi管理下のみを既定にして
-            -- 想定外の壊れた snippet が混入しないようにする。
-            -- VSCodeとユーザースニペットを共有したい場合のみ search_paths に
-            --   vim.fn.expand("~/Library/Application Support/Code/User/snippets")
-            -- を足す。
-            search_paths = { vim.fn.stdpath("config") .. "/snippets" },
+            search_paths = {
+              vim.fn.stdpath("data") .. "/lazy/friendly-snippets",
+              vim.fn.stdpath("config") .. "/snippets",
+            },
           },
         },
       },
