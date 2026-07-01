@@ -314,3 +314,72 @@ EOF
   echo "作成しました: $filename"
   nvim -c "MarkdownPreview" "$filename"
 }
+
+# -----------------------------------------------------------------------------
+# repos ディレクトリ移動
+# -----------------------------------------------------------------------------
+
+# ~/Workspace/repos/ 配下のリポジトリへ相対パス指定で移動する
+#   例: repos github.com/MediaPlanet/living-flyer-manage
+#   引数なしの場合は ~/Workspace/repos/ 直下へ移動する
+#   補完: repos<TAB> で配下の移動可能なディレクトリを階層的に表示する
+repos() {
+  local base="${HOME}/Workspace/repos"
+
+  # 引数なしなら基準ディレクトリへ
+  if [ $# -eq 0 ]; then
+    cd "$base"
+    return
+  fi
+
+  # 末尾スラッシュを除去して目的パスを組み立てる
+  local target="${base}/${1%/}"
+
+  if [ -d "$target" ]; then
+    cd "$target"
+  else
+    echo "ディレクトリが見つかりません: $target" >&2
+    return 1
+  fi
+}
+
+# repos の補完: ~/Workspace/repos/ を基準にディレクトリのみを階層補完する
+#   -J で明示的なグループ名を付けている点が重要。
+#   completion.zsh の `zstyle ':completion:*' group-name ''`（全補完を無名グループに集約）と
+#   `_files -W`（基準ディレクトリ指定）を併用すると、内部の2パスが無名グループに畳まれて
+#   候補が二重表示される。明示グループ名を与えると1グループに統合され重複しなくなる。
+_repos() {
+  _files -J repos-dirs -W "${HOME}/Workspace/repos" -/
+}
+compdef _repos repos
+
+# ~/Workspace/ 配下へ相対パス指定で移動する（repos の Workspace ルート版）
+#   例: wp sandbox/python
+#   引数なしの場合は ~/Workspace/ 直下へ移動する
+#   補完: wp<TAB> で配下の移動可能なディレクトリを階層的に表示する
+wp() {
+  local base="${HOME}/Workspace"
+
+  # 引数なしなら基準ディレクトリへ
+  if [ $# -eq 0 ]; then
+    cd "$base"
+    return
+  fi
+
+  # 末尾スラッシュを除去して目的パスを組み立てる
+  local target="${base}/${1%/}"
+
+  if [ -d "$target" ]; then
+    cd "$target"
+  else
+    echo "ディレクトリが見つかりません: $target" >&2
+    return 1
+  fi
+}
+
+# wp の補完: ~/Workspace/ を基準にディレクトリのみを階層補完する
+#   -J で明示的なグループ名を付ける理由は _repos と同じ（group-name '' との併用による二重表示回避）
+_wp() {
+  _files -J wp-dirs -W "${HOME}/Workspace" -/
+}
+compdef _wp wp

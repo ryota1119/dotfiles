@@ -51,7 +51,6 @@ alias path='echo -e ${PATH//:/\\n}'
 alias now='date +"%T"'
 alias week='date +%V'
 alias timer='echo "Timer started. Stop with Ctrl-D." && date && time cat && date'
-alias workspace='cd ~/Workspace'
 
 # -----------------------------------------------------------------------------
 # Git
