@@ -4,9 +4,9 @@
 # =============================================================================
 
 [user]
-    name = {{ onepasswordRead "op://Personal/GitHub.Personal/username" }}
-    email = {{ onepasswordRead "op://Personal/GitHub.Personal/email" }}
-    signingkey = {{ onepasswordRead "op://Personal/id_ed25519/public_key" }}
+    name = {{ onepasswordRead "op://Personal/GitHub.Personal/username" "my.1password.com" }}
+    email = {{ onepasswordRead "op://Personal/GitHub.Personal/email" "my.1password.com" }}
+    signingkey = {{ onepasswordRead "op://Personal/id_ed25519/public_key" "my.1password.com" }}
 
 # 1Password SSH署名設定
 [gpg "ssh"]
