@@ -354,10 +354,10 @@ _repos() {
 compdef _repos repos
 
 # ~/Workspace/ 配下へ相対パス指定で移動する（repos の Workspace ルート版）
-#   例: wp sandbox/python
+#   例: work sandbox/python
 #   引数なしの場合は ~/Workspace/ 直下へ移動する
-#   補完: wp<TAB> で配下の移動可能なディレクトリを階層的に表示する
-wp() {
+#   補完: work<TAB> で配下の移動可能なディレクトリを階層的に表示する
+work() {
   local base="${HOME}/Workspace"
 
   # 引数なしなら基準ディレクトリへ
@@ -377,9 +377,9 @@ wp() {
   fi
 }
 
-# wp の補完: ~/Workspace/ を基準にディレクトリのみを階層補完する
+# work の補完: ~/Workspace/ を基準にディレクトリのみを階層補完する
 #   -J で明示的なグループ名を付ける理由は _repos と同じ（group-name '' との併用による二重表示回避）
-_wp() {
-  _files -J wp-dirs -W "${HOME}/Workspace" -/
+_work() {
+  _files -J work-dirs -W "${HOME}/Workspace" -/
 }
-compdef _wp wp
+compdef _work work
