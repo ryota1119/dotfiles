@@ -4,13 +4,13 @@
 # =============================================================================
 
 [user]
-    name = {{ onepasswordRead "op://Personal/GitHub.Personal/username" "my.1password.com" }}
-    email = {{ onepasswordRead "op://Personal/GitHub.Personal/email" "my.1password.com" }}
-    signingkey = {{ onepasswordRead "op://Personal/id_ed25519/public_key" "my.1password.com" }}
+    name = {{ onepasswordRead .gitIdentity.onepasswordUsernamePath .gitIdentity.onepasswordAccount }}
+    email = {{ onepasswordRead .gitIdentity.onepasswordEmailPath .gitIdentity.onepasswordAccount }}
+    signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath .gitIdentity.onepasswordAccount }}
 
 # 1Password SSH署名設定
 [gpg "ssh"]
     program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 
 [ghq]
-	root = /Users/{{ .chezmoi.username }}/Src
+	root = /Users/{{ .chezmoi.username }}/Workspace/repos
