@@ -36,7 +36,7 @@
     visual = !gitk
 
 [help]
-    autocorrect = 1
+    autocorrect = prompt
 
 [credential]
     helper = osxkeychain
@@ -48,9 +48,9 @@
 [commit]
     gpgsign = true
 
-# URL設定
-[url "ssh://git@github.com"]
-    insteadOf = https://github.com
+# URL設定（fetchはhttpsのまま、pushのみSSHに書き換え）
+[url "ssh://git@github.com/"]
+    pushInsteadOf = https://github.com/
 
 # 個人固有の設定を読み込み
 [include]

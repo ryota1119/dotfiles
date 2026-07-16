@@ -11,6 +11,7 @@
 # 1Password SSH署名設定
 [gpg "ssh"]
     program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+    allowedSignersFile = ~/.ssh/allowed_signers
 
 [ghq]
-	root = /Users/{{ .chezmoi.username }}/Workspace/repos
+	root = {{ .chezmoi.homeDir }}/Workspace/repos
