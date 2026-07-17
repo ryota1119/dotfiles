@@ -1,2 +1,5 @@
 # lazy.nvim のロックファイルはマシンごとに変動するため chezmoi 管理外にする
 .config/nvim/lazy-lock.json
+
+# gh CLI の認証情報（トークンを含み得る）は chezmoi 管理外にする
+.config/gh/hosts.yml
