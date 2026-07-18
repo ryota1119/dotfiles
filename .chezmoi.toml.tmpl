@@ -3,6 +3,6 @@
      キー名は "onepassword" だとchezmoi組み込みの予約データ(op連携設定)と衝突するため gitIdentity にしている。 */}}
 [data.gitIdentity]
     onepasswordAccount        = {{ promptStringOnce . "gitIdentity.onepasswordAccount" "1Password account" "my.1password.com" | quote }}
-    onepasswordUsernamePath   = {{ promptStringOnce . "gitIdentity.onepasswordUsernamePath" "1Password path (git username)" "op://Personal/GitHub.Personal/username" | quote }}
-    onepasswordEmailPath      = {{ promptStringOnce . "gitIdentity.onepasswordEmailPath" "1Password path (git email)" "op://Personal/GitHub.Personal/email" | quote }}
+    onepasswordUsernamePath   = {{ promptStringOnce . "gitIdentity.onepasswordUsernamePath" "1Password path (git username)" "op://Personal/GitHub - ryota1119/username" | quote }}
+    onepasswordEmailPath      = {{ promptStringOnce . "gitIdentity.onepasswordEmailPath" "1Password path (git email)" "op://Personal/GitHub - ryota1119/email" | quote }}
     onepasswordSigningKeyPath = {{ promptStringOnce . "gitIdentity.onepasswordSigningKeyPath" "1Password path (SSH signing public key)" "op://Personal/id_ed25519/public_key" | quote }}
