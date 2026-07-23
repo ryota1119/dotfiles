@@ -4,9 +4,9 @@
 # =============================================================================
 
 [user]
-    name = {{ onepasswordRead .gitIdentity.onepasswordUsernamePath }}
-    email = {{ onepasswordRead .gitIdentity.onepasswordEmailPath }}
-    signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath }}
+    name = {{ onepasswordRead .gitIdentity.onepasswordUsernamePath .gitIdentity.onepasswordAccount }}
+    email = {{ onepasswordRead .gitIdentity.onepasswordEmailPath .gitIdentity.onepasswordAccount }}
+    signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath .gitIdentity.onepasswordAccount }}
 
 # 1Password SSH署名設定
 [gpg "ssh"]
