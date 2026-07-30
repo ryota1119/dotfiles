@@ -1,20 +1,14 @@
 return {
-  "catppuccin/nvim",
-  name = "catppuccin",
+  "projekt0n/github-nvim-theme",
+  name = "github-theme",
   priority = 1000,
   config = function()
-    require("catppuccin").setup({
-      flavour = "mocha",
-      integrations = {
-        blink_cmp = true,
-        bufferline = true,
-        gitsigns = true,
-        noice = true,
-        telescope = { enabled = true },
-        treesitter = true,
-        which_key = true,
+    require("github-theme").setup({
+      options = {
+        transparent = false,
+        terminal_colors = true,
       },
     })
-    vim.cmd.colorscheme("catppuccin")
+    vim.cmd.colorscheme("github_dark_default")
   end,
 }
