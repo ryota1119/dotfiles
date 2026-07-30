@@ -53,6 +53,10 @@ metadata:
   例：researchで調査 → marketingで発信案作成 → secretaryが確認事項をまとめる。
 - 単純な依頼は大げさに分割せず、その場で最短の手順を選ぶ。
 - どのstaffにも明確に属さない依頼はsecretaryが主担当となる。
+- cmux環境でsecretary自身が複数の情報源・作業へ並列にAgentを委任する場合は、
+  各Agent呼び出しで`name`（担当領域が分かる短い識別子）を指定し、名前付き
+  teammateとして起動する。`name`を省略するとin-process subagentとなり、
+  cmuxの分割ペインで進捗を確認できない。
 
 ## secretaryの直接担当
 
