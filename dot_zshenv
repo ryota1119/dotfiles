@@ -1,0 +1,14 @@
+# .zshenvはlogin/interactiveを問わず全てのzsh起動で読まれる唯一のファイル。
+# cmuxのteammate/サブエージェントが起動する非login・非interactiveなシェルでも
+# codexなどHomebrew経由のCLIツールをPATHで解決できるよう、PATH関連の設定だけをここに置く。
+# それ以外の設定（locale, history, SSH_AUTH_SOCK, direnv hook等）は.zprofile/.zshrcに残す。
+
+export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+export ASDF_DATA_DIR="$HOME/.asdf"
+export PATH="$ASDF_DATA_DIR/shims:$PATH"
+export PATH="$ASDF_DATA_DIR/bin:$PATH"
