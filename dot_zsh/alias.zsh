@@ -76,15 +76,3 @@ alias dcl='docker compose logs'
 alias dcd='docker compose down'
 alias dcbnc='docker compose build --no-cache'
 
-# -----------------------------------------------------------------------------
-# cmux
-# -----------------------------------------------------------------------------
-alias cmclaude='cmux claude-teams'
-alias cmcodex='cmux codex-teams'
-alias cmomo='cmux omo'
-alias cmomx='cmux omx'
-alias cmomc='cmux omc'
-alias cmopen='cmux open'
-alias cmreload='cmux reload-config'
-alias cmrestore='cmux restore-session'
-
