@@ -9,7 +9,7 @@ description: >
   Also triggers on: "開発して", "実装して", "修正して", "バグ調査", "技術設計",
   "リファクタリング", "コードレビュー", "テスト追加".
 metadata:
-  version: 1.2.2
+  version: 1.2.3
 ---
 
 # Engineering — ソフトウェア開発スタッフ
@@ -150,11 +150,10 @@ Codexと実装agentは原則として`~/Workspace`を起点に起動し、共通
 
 cmux環境の名前付きteammate（サブエージェント）から`codex`コマンドを実行すると、
 teammateペインが起動するシェルには`.zshenv`等の通常のPATH設定が反映されず
-`codex`が見つからないことがある（cmux側の既知の問題で、シェル設定側の
-workaroundでは解消しない）。cmux側の対応が入るまでは、`codex`の呼び出しは
-名前付きteammate/サブエージェントへ委任せず、メインセッションから直接
-Bashで実行する。相談モードのセカンドオピニオンも同様に、メインセッションから
-呼び出す。
+`codex`が見つからないことがある（cmux側の既知の問題）。この場合はバイナリを
+フルパス（例：`/opt/homebrew/bin/codex`。実体は`brew list codex`や
+`ls -la /opt/homebrew/bin/codex`で確認する）で呼び出せば解消する。フルパス
+実行であれば、名前付きteammate/サブエージェントからのcodex呼び出しも問題ない。
 
 ## Claudeによる実装レビュー
 
