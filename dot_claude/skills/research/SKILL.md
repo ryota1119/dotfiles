@@ -142,12 +142,14 @@ in-process subagentとして実行され、ボスが進捗をペインで確認�
 既存ページの更新で十分な場合は、新しいページを作らない。
 単なる言及だけを理由にentity・conceptを量産しない。
 
-sourceページを作る場合は、末尾に必ず`## 出典`を設け、元URL、公開日、
-取り込み日、ローカル原本がある場合はその参照を記載する。
-URLが不明な場合は「URL不明」と明記する。
+実際の保存操作は、Vault側の`wiki-ingest`スキル（またはその手動代行としての
+transactionバンドル）経由で行う。`index.md`・`log.md`・address採番・
+source-ledger／claim-ledgerの更新を、Claude・researchが個別に手書きしない。
 
-作成・更新後は、`index.md`・`log.md`・相互リンクなど、
-Exocortexの規約で必要な保守を行い、変更ファイルを報告する。
+ソースのURL、公開日、取得日、ローカル原本の参照は、ingestに渡す前にresearch側で
+把握・整理しておく。URLが不明な場合は「URL不明」と明記する。
+
+保存後は、生成・更新されたファイルと、ledgerに記録された確信度・出典を報告する。
 
 ## 会社関連情報
 
@@ -171,8 +173,7 @@ Exocortexは個人タスクを管理しない（`tasks/`レイヤーは廃止）
 
 - 読み取り、検索、調査、比較、分析、要約
 - 調査報告とドラフトの作成
-- 保存条件を満たす知識のExocortexへの記録
-- 記録に伴うindex・log・frontmatter・相互リンクの保守
+- 保存条件を満たす知識のExocortexへの記録（`wiki-ingest`スキル経由）
 
 ### 事前承認が必要なこと
 
