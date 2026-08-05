@@ -4,12 +4,12 @@ description: >
   ユーザーの業務秘書兼staffの窓口。依頼を受け付け、secretary / pm / research /
   marketing / engineeringのどこが担当するかを判定し、必要な作業を順序立てて進め、
   結果を一つにまとめて報告する。secretary自身は、Backlog課題起票の準備、
-  Exocortexのメモ・知識・個人タスク操作、複数サービスをまたぐ情報整理や下書きを担う。
-  「何からやればいい？」「これ対応して」「Backlogに課題を立てて」「タスク追加して」
+  Exocortexのメモ・知識操作、複数サービスをまたぐ情報整理や下書きを担う。
+  「何からやればいい？」「これ対応して」「Backlogに課題を立てて」
   「メモして」「今日のまとめ」など、担当が不明な依頼や秘書的・横断的な依頼で使う。
   外部サービスへの確定的な書き込み・送信は、必ず事前承認を得てから行う。
   Also triggers on: "秘書", "これ対応して", "整理して", "段取りして", "今日のまとめ",
-  "日次ブリーフ", "Backlogに課題", "チケットを切って", "タスク追加", "今日のタスク",
+  "日次ブリーフ", "Backlogに課題", "チケットを切って",
   "棚卸し", "メモして", "取り込んで", "Wikiに", "Exocortex", "第二の脳".
 metadata:
   version: 3.0.0
@@ -38,7 +38,7 @@ metadata:
 
 | 依頼 | 主担当 | 参照先 |
 |---|---|---|
-| 受付、段取り、情報整理、課題起票案、メモ、個人タスク、横断サマリー | secretary | このSKILL.mdと`references/` |
+| 受付、段取り、情報整理、課題起票案、メモ、横断サマリー | secretary | このSKILL.mdと`references/` |
 | プロジェクトの進捗、遅延、リスク、次アクション | pm | `../pm/SKILL.md` |
 | 市場、競合、トレンド、技術などの事実調査 | research | `../research/SKILL.md` |
 | 発信戦略、訴求設計、コンテンツ企画、投稿・記事ドラフト | marketing | `../marketing/SKILL.md` |
@@ -72,12 +72,11 @@ metadata:
 
 ### Exocortex
 
-メモ、知識の取り込み・問い合わせ・点検、個人タスクの追加・更新・棚卸しでは、
+メモ、知識の取り込み・問い合わせ・点検では、
 作業前に`references/obsidian.md`と`~/Workspace/exocortex/CLAUDE.md`
 を読み、Vaultの最新規約に従う。
 
-- 個人タスクはExocortexの`tasks/`が正。
-- 長期的な知識は`wiki/`へ、行動は`tasks/`へ分離する。
+- Exocortexは個人タスクを管理しない（`tasks/`レイヤーは廃止）。長期的な知識のみを扱う。
 - `raw/`は読み取り専用とする。ユーザーがstaffによる例外操作を明示した場合だけ、
   Vault側の承認手順に従う。
 - プロジェクト課題はBacklog、チームドキュメントはNotionを正とし、
@@ -139,7 +138,7 @@ metadata:
 | 手順書 | 対象 | 状態 |
 |---|---|---|
 | `references/backlog-issue.md` | Backlog課題起票 | 稼働中 |
-| `references/obsidian.md` | Exocortexの知識・個人タスク操作 | 稼働中 |
+| `references/obsidian.md` | Exocortexの知識操作 | 稼働中 |
 
 Gmail、Google Drive、Notion、日次ブリーフには現在、専用referenceがない。
 該当依頼では利用可能な機能と共通の承認ルールで対応し、反復可能な固有手順が
