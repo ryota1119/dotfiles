@@ -1,15 +1,15 @@
 # Codex呼び出しのトラブルシューティング
 
-## cmuxの名前付きteammateからcodexコマンドが見つからない
+## codexコマンドが見つからない
 
-cmux環境の名前付きteammate（サブエージェント）から`codex`コマンドを実行すると、
-teammateペインが起動するシェルには`.zshenv`等の通常のPATH設定が反映されず
-`codex`が見つからないことがある（cmux側の既知の問題）。
+`codex`が解決できない場合は、バイナリをフルパスで呼び出せば解消する。実体は
+`command -v codex`、`brew list codex`、`ls -la /opt/homebrew/bin/codex`
+などで確認する。
 
-この場合はバイナリをフルパス（例：`/opt/homebrew/bin/codex`。実体は
-`brew list codex`や`ls -la /opt/homebrew/bin/codex`で確認する）で呼び出せば
-解消する。フルパス実行であれば、名前付きteammate/サブエージェントからの
-codex呼び出しも問題ない。
+なお通常のサブエージェントは親セッションと同じPATHを引き継ぐため、
+親で`codex`が解決できていればサブエージェントでも解決できる
+（2026-08-10に実測で確認）。別プロセスのシェルを起動する実行形態を使う場合のみ、
+PATHが引き継がれない可能性を疑う。
 
 ## 同じ問題で進捗がない場合
 
