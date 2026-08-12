@@ -9,7 +9,7 @@ description: >
   Also triggers on: "開発して", "実装して", "修正して", "バグ調査", "技術設計",
   "リファクタリング", "コードレビュー", "テスト追加".
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 effort: xhigh
 ---
 
@@ -58,13 +58,17 @@ Claudeは原則としてコードを変更せず、次を行う。
 計画作成は先に行う。
 
 対象が大規模なリポジトリや複数モジュール・複数ファイルにまたがる調査の場合は、
-探索をExploreまたはgeneral-purpose agentへ委任し、調査ログではなく発見事項の
+探索を`subagent_type: "repo-explorer"`へ委任し、調査ログではなく発見事項の
 要約だけを受け取る。これによりメインの会話が大量のファイル内容・grep結果で
 圧迫されず、後続の設計検討やレビューに文脈の余力を残せる。対象範囲が数ファイル
 程度に絞られている小規模な調査では、Agentを介さず直接読み進めてよい。
 
-探索を担うAgentには`model: "sonnet"`を指定する。この工程はコードの読み取りと
-発見事項の抽出が中心で、設計判断は含まないため。
+`repo-explorer`は`~/.claude/agents/repo-explorer.md`で定義しており、
+`model: sonnet`・`effort: low`・読み取り専用のツール構成を定義側で固定している。
+この工程はコードの読み取りと発見事項の抽出が中心で、設計判断は含まないため。
+**Agentツールには`effort`パラメータが無く、定義ファイル以外にサブエージェントの
+effortを下げる手段が無い**ため、`model`パラメータの直接指定ではなく
+`subagent_type`で呼ぶ。
 
 ## モデル選定
 
@@ -73,7 +77,7 @@ Claudeは原則としてコードを変更せず、次を行う。
 
 | 工程 | モデル | effort | 理由 |
 |---|---|---|---|
-| 探索・調査（Explore / general-purpose） | Sonnet | `medium` | 読み取りと抽出が中心。公式もsubagentを低effortの代表例に挙げる |
+| 探索・調査（`repo-explorer`） | Sonnet | `low` | 読み取りと抽出が中心。公式もsubagentを低effortの代表例に挙げる。定義ファイル側で固定 |
 | 計画作成 | **常にOpus** | `xhigh` | 意図の汲み取りが後続の実装量を左右する。公式のagentic用途推奨値 |
 | 実装レビュー | **常にOpus** | `xhigh`（高リスク変更は`max`） | 仕様適合性とリスクの見逃し防止を優先する |
 | 独立レビュー | Codex（read-only） | GPT-5.6 Sol / high | 設計者と別系統の視点を入れる |
@@ -94,7 +98,17 @@ frontmatterの`effort: xhigh`は、ボスの環境のセッション既定`mediu
 Agent起動時の`model`パラメータ指定は正しく機能することを、9本のAgent実行ログで確認した
 （`model: "sonnet"`指定 → 全件`claude-sonnet-5`で実行。親セッションはOpus 5）。
 報告されている親モデル固定の不具合（anthropics/claude-code#43869）はこの環境では再現しない。
-`.claude/agents/`の定義ファイルは現在存在せず、frontmatter経由の指定は未使用。
+
+**エージェント定義ファイル（`~/.claude/agents/*.md`）のfrontmatter経由でも、
+`model`と`effort`の両方が適用される**ことを同日に確認した。headless経路と対話経路の
+両方で、定義どおりの`claude-sonnet-5`・指定effortで実行され、親セッションの
+effortには影響されなかった。staff共通の委任先（`repo-explorer` / `source-reader` /
+`status-collector`）はこの経路で運用している。
+
+なお定義ファイルは**作成直後には認識されない**（`Agent type not found`になる）が、
+同一セッションのまま後に認識される。定義を追加した直後に使えなくても、
+セッションを捨てる必要はない。検証手順と限界はExocortexの
+`claude-code-model-effort-selection-2026-08`が正。
 
 ## 相談モード
 

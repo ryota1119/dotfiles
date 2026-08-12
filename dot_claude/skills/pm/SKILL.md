@@ -9,7 +9,7 @@ description: >
   Also triggers on: "進捗確認", "進捗レポート", "Backlogの状況", "遅延タスク",
   "課題の棚卸し", "プロジェクトの全体像", "次アクション", "ブロッカー".
 metadata:
-  version: 2.1.0
+  version: 2.2.0
 effort: medium
 ---
 
@@ -56,10 +56,12 @@ effort: medium
    委任し、各Agentには「完了・進行中・未着手／リスク候補」の整理済み結果だけを
    返させる。生の課題一覧・コメント全文をメインの会話に取り込まない。
    単一情報源・単一プロジェクトの簡易確認ではAgentを介さず直接行ってよい。
-   読み取りと一次整理を担うAgentには`model: "sonnet"`を指定する。この工程は取得と
-   整理が中心で、リスク判定や優先順位付けはメインセッション側で行うため。
-   この`model`指定が実際に効いていることは2026-08-12に実測で確認済み（詳細は
-   Exocortexの`claude-code-model-effort-selection-2026-08`）。
+   読み取りと一次整理は`subagent_type: "status-collector"`へ委任する。この工程は
+   取得と整理が中心で、リスク判定や優先順位付けはメインセッション側で行うため。
+   `status-collector`は`~/.claude/agents/status-collector.md`で定義しており、
+   `model: sonnet`・`effort: low`を定義側で固定している。定義ファイル経由の指定が
+   実際に効くことは2026-08-12に実測で確認済み（詳細はExocortexの
+   `claude-code-model-effort-selection-2026-08`）。
    なおpmはfrontmatterで`effort: medium`を固定している。メインセッション側の仕事は
    整理済みの結果を突き合わせて棚卸しすることが中心で、公式が`medium`に挙げる
    「速度・コスト・性能のバランスが要るagenticタスク」に当たるため。
