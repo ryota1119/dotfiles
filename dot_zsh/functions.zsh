@@ -383,33 +383,3 @@ _work() {
   _files -J work-dirs -W "${HOME}/Workspace" -/
 }
 compdef _work work
-
-# -----------------------------------------------------------------------------
-# Claude Code（OpenRouter バックエンド時のみ有効）
-# -----------------------------------------------------------------------------
-
-# ANTHROPIC_AUTH_TOKEN をシェル環境に常駐させず、claude 起動時にだけ 1Password から解決する。
-# OP_OPENROUTER_KEY_PATH が未設定のマシン(ai.provider = "anthropic")では素通しし、
-# 純正の claude をそのまま呼ぶ。このため全マシンへ同期されても副作用が無い。
-claude() {
-  if [ -z "$OP_OPENROUTER_KEY_PATH" ]; then
-    command claude "$@"
-    return
-  fi
-
-  local token
-  token=$(op read --account "$OP_ACCOUNT_FOR_AI" "$OP_OPENROUTER_KEY_PATH" 2>/dev/null)
-  if [ -z "$token" ]; then
-    echo "OpenRouter APIキーを1Passwordから取得できませんでした: $OP_OPENROUTER_KEY_PATH" >&2
-    echo "op signin を実行してから再試行してください。" >&2
-    return 1
-  fi
-
-  ANTHROPIC_AUTH_TOKEN="$token" command claude "$@"
-}
-
-# 既定のモデルではなく Anthropic のモデル(ゲートウェイ経由)で起動する。
-# 注意: 選ぶモデルが変わるだけで、トラフィック自体はゲートウェイを通る。
-claude-anthropic() {
-  ANTHROPIC_MODEL="~anthropic/claude-sonnet-latest" claude "$@"
-}

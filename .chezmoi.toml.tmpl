@@ -9,15 +9,3 @@
     onepasswordUsernamePath   = {{ promptStringOnce . "gitIdentity.onepasswordUsernamePath" "1Password path (git username)" "op://Personal/GitHub - ryota1119/username" | quote }}
     onepasswordEmailPath      = {{ promptStringOnce . "gitIdentity.onepasswordEmailPath" "1Password path (git email)" "op://Personal/GitHub - ryota1119/email" | quote }}
     onepasswordSigningKeyPath = {{ promptStringOnce . "gitIdentity.onepasswordSigningKeyPath" "1Password path (SSH signing public key)" "op://Personal/id_ed25519/public_key" | quote }}
-
-{{/* PCごとにClaude Codeのバックエンドを切り替える設定。
-     "anthropic" ならAI関連の環境変数を一切exportせず、Claude Codeは純正のまま動く。
-     "openrouter" ならOpenRouter経由の接続先とモデル指定をexportする。
-     既定値を "anthropic" にしているのは、質問に答え損ねても現状維持に倒れるようにするため。
-     マシン識別にhostnameを使わないのは、hostnameが変わり得るのと、
-     gitIdentityと同じpromptStringOnceのパターンに揃えるため。
-     APIキーの実値は保存せず、1Passwordの参照パスだけを保持する。
-     詳細はREADME.mdの「Claude Code のバックエンド切り替え」を参照。 */}}
-[data.ai]
-    provider          = {{ promptStringOnce . "ai.provider" "Claude Code backend (anthropic|openrouter)" "anthropic" | quote }}
-    openrouterKeyPath = {{ promptStringOnce . "ai.openrouterKeyPath" "1Password path (OpenRouter API key)" "op://Personal/OpenRouter/credential" | quote }}
