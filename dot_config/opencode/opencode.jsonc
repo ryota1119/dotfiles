@@ -32,18 +32,26 @@
     },
     "hn-mcp": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/sandbox/hn_mcp", "hn-mcp"],
+      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/repos/github.com/RayLabOrg/hn-mcp", "hn-mcp"],
       "enabled": true
     },
     "qiita-mcp": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/sandbox/qiita_mcp", "qiita-mcp"],
+      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/repos/github.com/RayLabOrg/qiita-mcp", "qiita-mcp"],
       "enabled": true
     },
     "zenn-mcp": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/sandbox/zenn_mcp", "zenn-mcp"],
+      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/repos/github.com/RayLabOrg/zenn-mcp", "zenn-mcp"],
       "enabled": true
+    },
+    "socialdata-mcp": {
+      "type": "local",
+      "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/repos/github.com/RayLabOrg/socialdata-mcp", "socialdata-mcp"],
+      "enabled": true,
+      "environment": {
+        "SOCIALDATA_API_KEY": "{env:SOCIALDATA_API_KEY}"
+      }
     }
   }
 }

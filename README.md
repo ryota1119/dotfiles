@@ -58,7 +58,7 @@ dot_config/               nvim, git, ghostty, lazygit, cmux, opencode
 実行時に利用可否を確認し、専用Agentが利用できない場合はメインセッションで直接実行する。
 
 MCPは Google Calendar、Gmail、Google Drive、Playwright、X API、Hacker News、
-Qiita、Zennの8個を設定している。
+Qiita、Zenn、Socialdataの9個を設定している。
 
 Google系MCPのOAuth認証は、chezmoi適用後に各マシンで実行する。
 
@@ -71,9 +71,13 @@ opencode mcp auth google-drive
 X API MCPには環境変数 `CLIENT_ID` と `CLIENT_SECRET` が必要である。
 実値はdotfilesへ保存しない。
 
-Hacker News、Qiita、ZennのMCPは、それぞれ
-`~/Workspace/sandbox/hn_mcp`、`~/Workspace/sandbox/qiita_mcp`、
-`~/Workspace/sandbox/zenn_mcp` が存在するマシンで利用できる。
+Socialdata MCPには環境変数 `SOCIALDATA_API_KEY` が必要である。実値はdotfilesへ保存しない。
+
+Hacker News、Qiita、Zenn、SocialdataのローカルMCPは、それぞれ
+`~/Workspace/repos/github.com/RayLabOrg/` 配下の `hn-mcp`、`qiita-mcp`、
+`zenn-mcp`、`socialdata-mcp` を利用する。新しいマシンでは
+workstation-provisioningの`workspace-repositories`ロールが、これらをghq配下へclone/更新し、
+`uv sync --frozen`で依存関係を復元する。
 
 設定、Agent定義、共用スキルは次のコマンドで検証する。
 

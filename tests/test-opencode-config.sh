@@ -11,18 +11,20 @@ export XDG_CONFIG_HOME="$test_root/xdg-config"
 export OPENCODE_DISABLE_PROJECT_CONFIG=1
 export CLIENT_ID="test-client-id"
 export CLIENT_SECRET="test-client-secret"
+export SOCIALDATA_API_KEY="test-socialdata-api-key"
 mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 cp -R "$repo_root/dot_config/opencode" "$XDG_CONFIG_HOME/opencode"
 
 config_output="$test_root/config.json"
 opencode debug config >"$config_output"
 
-node - "$config_output" "$HOME" "$CLIENT_ID" "$CLIENT_SECRET" <<'NODE'
+node - "$config_output" "$HOME" "$CLIENT_ID" "$CLIENT_SECRET" "$SOCIALDATA_API_KEY" <<'NODE'
 const fs = require("fs")
 const config = JSON.parse(fs.readFileSync(process.argv[2], "utf8"))
 const home = process.argv[3]
 const clientId = process.argv[4]
 const clientSecret = process.argv[5]
+const socialdataApiKey = process.argv[6]
 
 const expected = {
   "google-calendar": {
@@ -56,24 +58,33 @@ const expected = {
   },
   "hn-mcp": {
     type: "local",
-    command: ["uv", "run", "--directory", `${home}/Workspace/sandbox/hn_mcp`, "hn-mcp"],
+    command: ["uv", "run", "--directory", `${home}/Workspace/repos/github.com/RayLabOrg/hn-mcp`, "hn-mcp"],
     enabled: true,
   },
   "qiita-mcp": {
     type: "local",
-    command: ["uv", "run", "--directory", `${home}/Workspace/sandbox/qiita_mcp`, "qiita-mcp"],
+    command: ["uv", "run", "--directory", `${home}/Workspace/repos/github.com/RayLabOrg/qiita-mcp`, "qiita-mcp"],
     enabled: true,
   },
   "zenn-mcp": {
     type: "local",
-    command: ["uv", "run", "--directory", `${home}/Workspace/sandbox/zenn_mcp`, "zenn-mcp"],
+    command: ["uv", "run", "--directory", `${home}/Workspace/repos/github.com/RayLabOrg/zenn-mcp`, "zenn-mcp"],
     enabled: true,
+  },
+  "socialdata-mcp": {
+    type: "local",
+    command: ["uv", "run", "--directory", `${home}/Workspace/repos/github.com/RayLabOrg/socialdata-mcp`, "socialdata-mcp"],
+    enabled: true,
+    environment: {
+      SOCIALDATA_API_KEY: socialdataApiKey,
+    },
   },
 }
 
 const actualNames = Object.keys(config.mcp ?? {}).sort()
 const expectedNames = Object.keys(expected).sort()
 if (Object.hasOwn(config.mcp ?? {}, "notion")) throw new Error("Notion MCP must not exist")
+if (actualNames.length !== 9) throw new Error(`Expected 9 MCPs, got ${actualNames.length}`)
 if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {
   throw new Error(`Unexpected MCP set: ${JSON.stringify(actualNames)}`)
 }
