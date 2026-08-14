@@ -54,6 +54,9 @@ dot_config/               nvim, git, ghostty, lazygit, cmux, opencode
 
 ## OpenCode
 
+`dot_claude/skills`はClaude CodeとOpenCodeで共用する。ランタイム固有のAgent、モデル、ツールは
+実行時に利用可否を確認し、専用Agentが利用できない場合はメインセッションで直接実行する。
+
 MCPは Google Calendar、Gmail、Google Drive、Playwright、X API、Hacker News、
 Qiita、Zennの8個を設定している。
 
@@ -72,8 +75,9 @@ Hacker News、Qiita、ZennのMCPは、それぞれ
 `~/Workspace/sandbox/hn_mcp`、`~/Workspace/sandbox/qiita_mcp`、
 `~/Workspace/sandbox/zenn_mcp` が存在するマシンで利用できる。
 
-設定とAgent定義は次のコマンドで検証する。
+設定、Agent定義、共用スキルは次のコマンドで検証する。
 
 ```sh
 tests/test-opencode-config.sh
+tests/test-shared-skills.sh
 ```
