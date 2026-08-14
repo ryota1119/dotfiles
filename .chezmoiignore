@@ -3,3 +3,6 @@
 
 # gh CLI の認証情報（トークンを含み得る）は chezmoi 管理外にする
 .config/gh/hosts.yml
+
+# 設定検証用テストはホームへ展開しない
+tests/

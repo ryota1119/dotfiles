@@ -2,8 +2,8 @@
 
 [chezmoi](https://www.chezmoi.io/) で複数マシンへ同期する個人のdotfiles。
 
-zsh、Neovim、Git、Ghostty、lazygit、cmux、および Claude Code の
-スキル・エージェント定義を管理する。
+zsh、Neovim、Git、Ghostty、lazygit、cmux、Claude Code の
+スキル・エージェント定義、および OpenCode のグローバル設定・MCP・Agentを管理する。
 
 ## Setup
 
@@ -31,7 +31,7 @@ chezmoi init --apply git@github.com:ryota1119/dotfiles.git
 .chezmoiignore            chezmoi 管理から外すファイル
 dot_zsh/                  zsh 設定（env / alias / functions / prompt / completion / fzf）
 dot_claude/               Claude Code の skills と agents
-dot_config/               nvim, git, ghostty, lazygit, cmux
+dot_config/               nvim, git, ghostty, lazygit, cmux, opencode
 ```
 
 `*.tmpl` は Go template として展開される。OS・アーキテクチャ差の吸収と、
@@ -51,3 +51,29 @@ dot_config/               nvim, git, ghostty, lazygit, cmux
 一般的な助言はこの構成では成立せず、書けば全マシンへ伝播する。
 マシン固有の値を置く場所を選ぶときは、ファイルの性質から推測せず
 `chezmoi managed` で管理対象を確認すること。
+
+## OpenCode
+
+MCPは Google Calendar、Gmail、Google Drive、Playwright、X API、Hacker News、
+Qiita、Zennの8個を設定している。
+
+Google系MCPのOAuth認証は、chezmoi適用後に各マシンで実行する。
+
+```sh
+opencode mcp auth google-calendar
+opencode mcp auth gmail
+opencode mcp auth google-drive
+```
+
+X API MCPには環境変数 `CLIENT_ID` と `CLIENT_SECRET` が必要である。
+実値はdotfilesへ保存しない。
+
+Hacker News、Qiita、ZennのMCPは、それぞれ
+`~/Workspace/sandbox/hn_mcp`、`~/Workspace/sandbox/qiita_mcp`、
+`~/Workspace/sandbox/zenn_mcp` が存在するマシンで利用できる。
+
+設定とAgent定義は次のコマンドで検証する。
+
+```sh
+tests/test-opencode-config.sh
+```
