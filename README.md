@@ -3,7 +3,7 @@
 [chezmoi](https://www.chezmoi.io/) で複数マシンへ同期する個人のdotfiles。
 
 zsh、Neovim、Git、Ghostty、lazygit、cmux、Claude Code の
-スキル・エージェント定義、および OpenCode のグローバル設定・MCP・Agentを管理する。
+スキル・エージェント定義、および OpenCode・Codex CLI のグローバル設定・MCP・Agentを管理する。
 
 ## Setup
 
@@ -32,6 +32,7 @@ chezmoi init --apply git@github.com:ryota1119/dotfiles.git
 dot_zsh/                  zsh 設定（env / alias / functions / prompt / completion / fzf）
 dot_claude/               Claude Code の skills と agents
 dot_config/               nvim, git, ghostty, lazygit, cmux, opencode
+dot_agents/               Codex CLI が読む user-level skills（`~/.claude/skills`へのsymlink）
 ```
 
 `*.tmpl` は Go template として展開される。OS・アーキテクチャ差の吸収と、
@@ -68,10 +69,12 @@ opencode mcp auth gmail
 opencode mcp auth google-drive
 ```
 
-X API MCPには環境変数 `CLIENT_ID` と `CLIENT_SECRET` が必要である。
-実値はdotfilesへ保存しない。
-
-Socialdata MCPには環境変数 `SOCIALDATA_API_KEY` が必要である。実値はdotfilesへ保存しない。
+X API MCPの`CLIENT_ID`/`CLIENT_SECRET`、Socialdata MCPの`SOCIALDATA_API_KEY`は、
+`dot_config/opencode/opencode.jsonc.tmpl`内で`onepasswordRead`により1Passwordから
+解決される（`chezmoi apply`のたびに再解決されるため、ローテーション後は1Password側を
+更新してから`chezmoi apply`するだけでよい）。実値はchezmoi source（git管理下）へは
+保存しないが、適用先の`~/.config/opencode/opencode.jsonc`には平文で書き込まれる
+（OpenCode自体が`{env:VAR}`形式でしか環境変数を解決できないため）。
 
 Hacker News、Qiita、Zenn、SocialdataのローカルMCPは、それぞれ
 `~/Workspace/repos/github.com/RayLabOrg/` 配下の `hn-mcp`、`qiita-mcp`、
@@ -84,4 +87,57 @@ workstation-provisioningの`workspace-repositories`ロールが、これらをgh
 ```sh
 tests/test-opencode-config.sh
 tests/test-shared-skills.sh
+```
+
+## Claude Code
+
+`~/.claude.json`はchezmoi管理外（Claude Code自身の内部状態ファイル）のため、MCPは
+`claude mcp add`で登録する。シークレットは1Passwordから読み、登録するスクリプトを
+`scripts/setup-claude-mcp.sh`に用意している。
+
+```sh
+bash scripts/setup-claude-mcp.sh
+```
+
+- `xapi`（userスコープ、全プロジェクト共通）：1Password「X Developer クライアント
+  シークレット」（Personal）
+- `xserver`（localスコープ、shino_music_school案件固有）：1Password「Xserver」
+  （**Development**ボルト。案件固有クレデンシャルは`Muumuu-domain`とあわせて
+  Personalから移動済み）。対象リポジトリが存在しない場合は登録をスキップする
+
+## Codex CLI
+
+CodexはOpenCodeと異なり`~/.claude/skills/`を直接読まず、`~/.agents/skills/`
+（user-level）と各プロジェクトの`.agents/skills/`（repo rootまで遡って探索）しか見ない。
+そのため`dot_agents/skills/`配下にchezmoiの`symlink_`機構でsecretary / pm / research /
+marketing / engineeringへのsymlinkを配置し、`~/.agents/skills/{同名}`として
+実体化させている。
+
+MCPは`~/.codex/config.toml`を直接編集せず、`codex mcp add`で登録する。
+`~/.codex/config.toml`はChatGPT Desktopアプリと共有する実行時状態ファイル
+（projects/marketplaces/hooks.state等を含む）のため、chezmoiでは管理しない。
+
+6件すべて登録済み。シークレットは1Passwordから読み、`codex mcp add`で登録する
+スクリプトを`scripts/setup-codex-mcp.sh`に用意している（`scripts/`はchezmoi管理外の
+セットアップ用ディレクトリ、`.chezmoiignore`参照）。新しいマシンでの初回セットアップ、
+シークレットローテーション後の再登録どちらもこのスクリプト再実行だけで済む。
+
+```sh
+bash scripts/setup-codex-mcp.sh
+```
+
+xapiは1Password「X Developer クライアントシークレット」（Personal、日本語タイトルの
+ため`op://`参照はitem IDで指定）、socialdata-mcpは「SocialData」（Personal）の
+`api_key`フィールドを参照する。
+
+Google Calendar/Gmail/Google Drive（remote MCP）はOpenCode専用の組み込みOAuthクライアントに
+依存しており、Codex側で同等の認証経路が未確認のため対象外。Notionも従来通り対象外。
+
+claude-obsidianの15 skillはchezmoi管理に含めず、
+`~/Workspace/repos/github.com/AgriciDaniel/claude-obsidian/bin/setup-multi-agent.sh`
+を新しいマシンで実行して揃える（OpenCode側`~/.config/opencode/skills/`と同じ方針）。
+
+```sh
+bash bin/setup-multi-agent.sh --host codex --apply
+bash bin/setup-multi-agent.sh --host codex --check
 ```
