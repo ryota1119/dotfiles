@@ -29,3 +29,8 @@ Gemfile.lock
 
 # 開発用の git worktree はリポジトリに含めない
 worktrees/
+
+# Python の生成物・キャッシュはリポジトリに含めない
+__pycache__/
+.pytest_cache/
+.venv/
