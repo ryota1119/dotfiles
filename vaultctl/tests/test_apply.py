@@ -225,3 +225,88 @@ def test_apply_replay_of_same_plan_fails_preconditions(txn_vault, tmp_path: Path
 
     with pytest.raises(PreconditionError):
         apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+
+class BoomError(RuntimeError):
+    """テスト用: N回目の atomic_write で送出する。"""
+
+
+def fail_on_nth_write(monkeypatch, n: int) -> dict:
+    """`vaultctl.apply.atomic_write` を「n回目の呼び出しで BoomError を投げる」ラッパに差し替える。
+
+    ロールバック経路は `vaultctl.apply._atomic.atomic_write` を使うため、この差し替えの
+    影響を受けない。戻り値はカウンタ dict（`counter["calls"]` で実呼び出し回数を見る）。
+    """
+    import vaultctl.apply as apply_mod
+
+    real_atomic_write = apply_mod.atomic_write
+    counter = {"calls": 0}
+
+    def flaky(target, data, *, mode=DEFAULT_MODE):
+        counter["calls"] += 1
+        if counter["calls"] == n:
+            raise BoomError(f"{n}回目の書き込みで失敗させた: {target}")
+        return real_atomic_write(target, data, mode=mode)
+
+    monkeypatch.setattr(apply_mod, "atomic_write", flaky)
+    return counter
+
+
+def test_rollback_removes_created_file_and_restores_sha256(
+    txn_vault, tmp_path: Path, monkeypatch
+) -> None:
+    """検証6・7: mode=create を含むトランザクションのロールバック。"""
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    root = txn_vault.root
+
+    original_sha = {w["path"]: w["original_sha256"] for w in plan["writes"]}
+    counter = fail_on_nth_write(monkeypatch, 3)  # wiki/a.md, wiki/b.md の後で失敗させる
+
+    with pytest.raises(BoomError):
+        apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert counter["calls"] == 3
+
+    # 検証6: mode=create で作られたファイルが削除されている
+    assert not (root / "wiki" / "b.md").exists()
+
+    # 検証7: 全対象の SHA256 が original_sha256 に戻っている
+    assert sha256_file(root / "wiki" / "a.md") == original_sha["wiki/a.md"]
+    assert sha256_file(root / "wiki" / "c.md") == original_sha["wiki/c.md"]
+    assert (root / "wiki" / "a.md").read_text(encoding="utf-8") == A_ORIGINAL
+    assert (root / "wiki" / "c.md").read_text(encoding="utf-8") == C_ORIGINAL
+
+    journal = read_journal(txn_vault.transactions_dir / "apply-20260817-0001" / "journal.json")
+    assert journal["state"] == "rolled-back"
+    assert journal["applied"] == []
+    assert not txn_vault.lock_path.exists()
+
+
+def test_rollback_on_first_write_leaves_everything_untouched(
+    txn_vault, tmp_path: Path, monkeypatch
+) -> None:
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    root = txn_vault.root
+    original_sha = {w["path"]: w["original_sha256"] for w in plan["writes"]}
+    fail_on_nth_write(monkeypatch, 1)
+
+    with pytest.raises(BoomError):
+        apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert sha256_file(root / "wiki" / "a.md") == original_sha["wiki/a.md"]
+    assert sha256_file(root / "wiki" / "c.md") == original_sha["wiki/c.md"]
+    assert not (root / "wiki" / "b.md").exists()
+    journal = read_journal(txn_vault.transactions_dir / "apply-20260817-0001" / "journal.json")
+    assert journal["state"] == "rolled-back"
+
+
+def test_rollback_preserves_original_file_mode(txn_vault, tmp_path: Path, monkeypatch) -> None:
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    root = txn_vault.root
+    os.chmod(root / "wiki" / "a.md", 0o640)
+    fail_on_nth_write(monkeypatch, 3)
+
+    with pytest.raises(BoomError):
+        apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert os.stat(root / "wiki" / "a.md").st_mode & 0o777 == 0o640
