@@ -4,11 +4,35 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
+
+from vaultctl.hashing import canonical_json
+from vaultctl.plan import build_plan, load_bundle
+from vaultctl.plan import PlanError
+from vaultctl.vault import VaultError, resolve_vault
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    try:
+        vault = resolve_vault(args.vault)
+        bundle = load_bundle(Path(args.bundle))
+        plan = build_plan(vault, bundle)
+    except (VaultError, PlanError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(canonical_json(plan) + b"\n")
+    print(plan["approval_sha256"])
+    return 0
 
 
 def register_subcommands(sub: argparse._SubParsersAction) -> None:
-    """subcommand を登録する。T2 以降がこの関数に追記する。"""
-    return None
+    """subcommand を登録する。T5 以降がこの関数に追記する。"""
+    plan_parser = sub.add_parser("plan", help="変更計画を作る（vault は変更しない）")
+    plan_parser.add_argument("--bundle", required=True, metavar="B.json")
+    plan_parser.add_argument("--out", required=True, metavar="P.json")
+    plan_parser.set_defaults(handler=cmd_plan)
 
 
 def build_parser() -> argparse.ArgumentParser:
