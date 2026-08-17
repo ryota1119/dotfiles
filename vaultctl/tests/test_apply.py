@@ -111,3 +111,117 @@ def test_apply_aborts_when_replace_target_is_missing(txn_vault, tmp_path: Path) 
         apply_plan(txn_vault, plan, plan["approval_sha256"])
 
     assert list(txn_vault.transactions_dir.iterdir()) == []
+
+
+from vaultctl.apply import DEFAULT_MODE
+from vaultctl.journal import JOURNAL_SCHEMA, read_journal
+
+
+def test_apply_writes_all_files_and_completes_journal(txn_vault, tmp_path: Path) -> None:
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    root = txn_vault.root
+
+    journal = apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert (root / "wiki" / "a.md").read_text(encoding="utf-8") == A_NEW
+    assert (root / "wiki" / "b.md").read_text(encoding="utf-8") == B_NEW
+    assert (root / "wiki" / "c.md").read_text(encoding="utf-8") == C_NEW
+
+    assert journal["schema"] == JOURNAL_SCHEMA
+    assert journal["state"] == "complete"
+    assert journal["operation_id"] == "apply-20260817-0001"
+    assert journal["operation_type"] == "ingest"
+    assert journal["applied"] == ["wiki/a.md", "wiki/b.md", "wiki/c.md"]
+    assert journal["approval_sha256"] == plan["approval_sha256"]
+    assert journal["input_bundle_sha256"] == plan["input_bundle_sha256"]
+    assert isinstance(journal["completed_epoch"], float)
+
+    on_disk = read_journal(txn_vault.transactions_dir / "apply-20260817-0001" / "journal.json")
+    assert on_disk == journal
+
+
+def test_apply_records_backups_only_for_existing_originals(txn_vault, tmp_path: Path) -> None:
+    plan, _ = make_fixture(txn_vault, tmp_path)
+
+    journal = apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    by_path = {w["path"]: w for w in journal["writes"]}
+    assert by_path["wiki/a.md"]["backup"] == "0001.original"
+    assert by_path["wiki/c.md"]["backup"] == "0002.original"
+    assert by_path["wiki/b.md"]["backup"] is None
+
+    backups = txn_vault.transactions_dir / "apply-20260817-0001" / "backups"
+    assert sorted(p.name for p in backups.iterdir()) == ["0001.original", "0002.original"]
+    assert (backups / "0001.original").read_text(encoding="utf-8") == A_ORIGINAL
+    assert (backups / "0002.original").read_text(encoding="utf-8") == C_ORIGINAL
+
+
+def test_apply_handles_delete_mode(txn_vault, tmp_path: Path) -> None:
+    root = txn_vault.root
+    (root / "inbox" / "old.html").write_text("捨てる\n", encoding="utf-8")
+    bundle = {
+        "schema": "vaultctl.bundle.v1",
+        "operation_id": "apply-20260817-0002",
+        "operation_type": "ingest",
+        "writes": [{"path": "inbox/old.html", "mode": "delete"}],
+    }
+    plan = build_plan(txn_vault, bundle)
+
+    journal = apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert not (root / "inbox" / "old.html").exists()
+    assert journal["applied"] == ["inbox/old.html"]
+    entry = journal["writes"][0]
+    assert entry["new_sha256"] is None
+    assert entry["new_mode"] is None
+    assert entry["backup"] == "0001.original"
+    backup = txn_vault.transactions_dir / "apply-20260817-0002" / "backups" / "0001.original"
+    assert backup.read_text(encoding="utf-8") == "捨てる\n"
+
+
+def test_apply_holds_lock_while_writing(txn_vault, tmp_path: Path, monkeypatch) -> None:
+    """apply 中はロックが取られていること（hold_lock 経由）。"""
+    import vaultctl.apply as apply_mod
+
+    real_atomic_write = apply_mod.atomic_write
+    lock_seen: list[bool] = []
+
+    def spy(target, data, *, mode=DEFAULT_MODE):
+        lock_seen.append(txn_vault.lock_path.exists())
+        return real_atomic_write(target, data, mode=mode)
+
+    monkeypatch.setattr(apply_mod, "atomic_write", spy)
+
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    assert lock_seen == [True, True, True]
+    # 終了後は解放されている
+    assert not txn_vault.lock_path.exists()
+
+
+def test_apply_rejects_duplicate_operation_id(txn_vault, tmp_path: Path) -> None:
+    """同一 operation_id のトランザクションが既にあれば拒否する。
+
+    設計書 4.3 の手順は「3 プレコンディション照合 → 4 ジャーナルを pending で書く」の順
+    なので、同じ plan を素で2回流すとプレコンディション不一致（`PreconditionError`）が
+    先に出て重複検出まで届かない。重複ガード自体を見るため、プレコンディションが成立した
+    ままトランザクションディレクトリだけが存在する状態を作る。
+    """
+    from vaultctl.journal import open_transaction
+    from vaultctl.vault import VaultError
+
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    open_transaction(txn_vault, plan["operation_id"])
+
+    with pytest.raises(VaultError):
+        apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+
+def test_apply_replay_of_same_plan_fails_preconditions(txn_vault, tmp_path: Path) -> None:
+    """適用済みの plan をもう一度流すと、重複検出より先にプレコンディションで止まる。"""
+    plan, _ = make_fixture(txn_vault, tmp_path)
+    apply_plan(txn_vault, plan, plan["approval_sha256"])
+
+    with pytest.raises(PreconditionError):
+        apply_plan(txn_vault, plan, plan["approval_sha256"])
