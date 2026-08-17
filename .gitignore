@@ -26,3 +26,6 @@ Gemfile.lock
 *.swp
 *.swo
 *~
+
+# 開発用の git worktree はリポジトリに含めない
+worktrees/
