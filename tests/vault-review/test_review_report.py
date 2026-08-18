@@ -16,7 +16,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_SCRIPT = ROOT / "scripts" / "make-fixture-vault.sh"
-REPORT_SCRIPT = ROOT / "dot_claude/skills/vault-review/scripts/review-report.py"
+# chezmoi は `executable_` 接頭辞が無いと実行ビットを展開先に保存しない。
+# 接頭辞を外した名前（review-report.py）が ~/.claude/ 側の実際のファイル名になる。
+REPORT_SCRIPT = ROOT / "dot_claude/skills/vault-review/scripts/executable_review-report.py"
 EXPECTED_RULE_COUNTS = {"2": 1, "3": 1, "4": 1, "5": 2, "6": 1, "7": 2}
 EXPECTED_VIOLATIONS = 8
 
