@@ -1,4 +1,4 @@
-"""空セクションと同期競合コピーの検出（T9、lint 規則6・8）。"""
+"""空セクションと同期競合コピー、末尾改行の欠落の検出（lint 規則6・8・11）。"""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from .frontmatter import Page
 
 CONFLICT_PATTERNS = (r" \(\d+\)\.md$", r"のコピー", r"conflicted copy", r"- コピー")
 SCAN_DIRS = ("wiki", "inbox", ".raw")
+# 規則11 の走査範囲。lint の他の規則（collect_pages）と揃えて wiki/ のみとする。
+TRAILING_NEWLINE_DIR = "wiki"
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
@@ -70,4 +72,36 @@ def check_conflict_copies(root: Path) -> list[Finding]:
                     rule="8", level="violation",
                     path=path.relative_to(root).as_posix(),
                     message=f"同期の競合コピーと思われるファイル名です: {path.name}"))
+    return sort_findings(found)
+
+
+def check_trailing_newline(root: Path) -> list[Finding]:
+    """規則11: wiki/**/*.md の末尾が改行で終わっていない。
+
+    非原子的な追記でファイルが切断された破損は、例外なく「末尾が改行で
+    終わっていない」という特徴を持つ。バイト列だけを見る検査なので、
+    frontmatter が壊れていて `collect_pages` がパースできなかったページや、
+    不正な UTF-8 を含むページに対しても等しく効く（デコードしない）。
+
+    空ファイル（0バイト）は対象外とする。末尾改行を問う中身がないため。
+
+    注: 規則番号は追記のみで振り直さない。番号の大小と level は対応せず、
+    規則9〜10が review、規則1〜8と11が violation である。
+    """
+    base = root / TRAILING_NEWLINE_DIR
+    if not base.is_dir():
+        return []
+    found: list[Finding] = []
+    for path in base.rglob("*.md"):
+        if not path.is_file():
+            continue
+        data = path.read_bytes()
+        if not data:
+            continue
+        if data.endswith(b"\n"):
+            continue
+        found.append(Finding(
+            rule="11", level="violation",
+            path=path.relative_to(root).as_posix(),
+            message="末尾が改行で終わっていません（追記の途中で切断された可能性があります）"))
     return sort_findings(found)

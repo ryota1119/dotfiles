@@ -10,8 +10,9 @@ from typing import Iterable
 class Finding:
     """lint が返す1件の指摘。
 
-    rule:    "1"〜"8"、"9-a"、"9-b"、"10-a"〜"10-d"
-    level:   "violation"（規則1〜8）| "review"（規則9〜10）
+    rule:    "1"〜"8"、"9-a"、"9-b"、"10-a"〜"10-d"、"11"
+    level:   "violation"（規則1〜8・11）| "review"（規則9〜10）
+             番号は追記のみで振り直さないため、番号の大小と level は対応しない。
     path:    vault 相対パス。vault 全体に関わるものは ""
     message: 日本語1行
     """
