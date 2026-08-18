@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from vaultctl.frontmatter import render_page
 from vaultctl.vault import resolve_vault
 
 
@@ -49,3 +50,30 @@ def txn_vault(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_STATE_HOME", str(state_home))
     monkeypatch.delenv("VAULTCTL_VAULT", raising=False)
     return resolve_vault(str(root))
+
+
+# --- T7 追記: ページ生成ヘルパ（T8・T9 も使う） ---
+
+DEFAULT_FRONTMATTER = {
+    "type": "concept",
+    "title": "テストページ",
+    "status": "developing",
+    "created": "2026-08-01",
+    "updated": "2026-08-02",
+    "tags": ["concept"],
+}
+
+
+def make_page(root, relpath, body="# 見出し\n\n本文です。\n", **fm):
+    """合成 vault にページを1枚作り、作ったファイルの Path を返す。
+
+    fm でデフォルトの frontmatter を上書きできる。値に None を渡すと
+    そのキーを削除する（必須キー欠落のテスト用）。
+    """
+    data = dict(DEFAULT_FRONTMATTER)
+    data.update(fm)
+    data = {k: v for k, v in data.items() if v is not None}
+    path = Path(root) / relpath
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render_page(data, body), encoding="utf-8")
+    return path
