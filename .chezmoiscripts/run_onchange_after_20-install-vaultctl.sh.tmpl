@@ -1,0 +1,21 @@
+#!/bin/sh
+# vaultctl-source-digest: {{ output "sh" "-c" (printf "find '%s/vaultctl' -type f \\( -name '*.py' -o -name 'pyproject.toml' \\) 2>/dev/null | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | cut -d' ' -f1" .chezmoi.sourceDir) | trim }}
+#
+# vaultctl のソース（*.py と pyproject.toml）の集約 SHA256 を上の行に埋め込み、
+# それが変わったときだけ chezmoi apply で再インストールされるようにする（設計書10節、D13）。
+
+set -eu
+
+source_dir="{{ .chezmoi.sourceDir }}/vaultctl"
+
+if [ ! -d "$source_dir" ]; then
+  printf 'vaultctl のソースが無いためインストールをスキップした: %s\n' "$source_dir" >&2
+  exit 0
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  printf 'uv が見つからないため vaultctl のインストールをスキップした\n' >&2
+  exit 0
+fi
+
+uv tool install --force --editable "{{ .chezmoi.sourceDir }}/vaultctl"
