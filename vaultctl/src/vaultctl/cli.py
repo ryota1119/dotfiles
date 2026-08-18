@@ -5,9 +5,20 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
+from vaultctl.findings import sort_findings
+from vaultctl.frontmatter import iter_pages
 from vaultctl.hashing import canonical_json
+from vaultctl.ledger import (
+    LedgerError,
+    check_claims,
+    check_page_ledger_consistency,
+    check_refresh_due,
+    check_review_status,
+    stage_ledger_writes,
+)
 from vaultctl.plan import PlanError, build_plan, load_bundle
 from vaultctl.vault import VaultError, resolve_vault
 
@@ -35,6 +46,7 @@ def register_subcommands(sub: argparse._SubParsersAction) -> None:
     plan_parser.set_defaults(handler=cmd_plan)
     _add_apply_parser(sub)
     _add_recover_parser(sub)
+    _add_ledger_parser(sub)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -127,3 +139,106 @@ def _cmd_recover(args) -> int:
         )
     print(f"巻き戻し {len(results)} 件")
     return 0
+
+
+def _cmd_ledger_stage(args) -> int:
+    try:
+        vault = resolve_vault(args.vault)
+    except VaultError as exc:
+        print(str(exc), file=sys.stderr)
+        return 64
+
+    bundle = json.loads(Path(args.bundle).read_text(encoding="utf-8"))
+    sources = (
+        json.loads(Path(args.add_source).read_text(encoding="utf-8")) if args.add_source else None
+    )
+    claims = (
+        json.loads(Path(args.add_claim).read_text(encoding="utf-8")) if args.add_claim else None
+    )
+    if sources is None and claims is None:
+        print("--add-source か --add-claim のいずれかを指定する", file=sys.stderr)
+        return 64
+
+    staging_dir = Path(args.staging_dir) if args.staging_dir else Path(args.out).parent
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        staged = stage_ledger_writes(
+            vault.root, bundle, sources=sources, claims=claims, staging_dir=staging_dir
+        )
+    except LedgerError as exc:
+        print(str(exc), file=sys.stderr)
+        return 64
+
+    Path(args.out).write_text(
+        json.dumps(staged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(args.out)
+    return 0
+
+
+def _cmd_ledger_verify(args) -> int:
+    try:
+        vault = resolve_vault(args.vault)
+    except VaultError as exc:
+        print(str(exc), file=sys.stderr)
+        return 64
+
+    if args.today is None:
+        today = date.today()
+    else:
+        try:
+            today = date.fromisoformat(args.today)
+        except ValueError:
+            print(f"--today は YYYY-MM-DD 形式で指定する: {args.today}", file=sys.stderr)
+            return 64
+
+    pages = list(iter_pages(vault.root))
+    findings = sort_findings(
+        [
+            *check_page_ledger_consistency(vault.root, pages),
+            *check_refresh_due(vault.root, today),
+            *check_review_status(vault.root),
+            *check_claims(vault.root, pages),
+        ]
+    )
+
+    if args.json_output:
+        print(
+            json.dumps(
+                [
+                    {"rule": f.rule, "level": f.level, "path": f.path, "message": f.message}
+                    for f in findings
+                ],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+    else:
+        for finding in findings:
+            location = finding.path or "(vault)"
+            print(f"[{finding.level}] 規則{finding.rule} {location}: {finding.message}")
+
+    if any(f.level == "violation" for f in findings):
+        return 1
+    if findings:
+        return 2
+    return 0
+
+
+def _add_ledger_parser(sub) -> None:
+    """`register_subcommands()` の中から呼ぶ。`--vault` は親 parser 側にある。"""
+    parser = sub.add_parser("ledger", help="ledger の追記と整合検証")
+    ledger_sub = parser.add_subparsers(dest="ledger_command", metavar="SUBCOMMAND")
+
+    stage = ledger_sub.add_parser("stage", help="bundle に ledger の write を追記する")
+    stage.add_argument("--bundle", required=True, metavar="FILE")
+    stage.add_argument("--out", required=True, metavar="FILE")
+    stage.add_argument("--add-source", default=None, metavar="FILE")
+    stage.add_argument("--add-claim", default=None, metavar="FILE")
+    stage.add_argument("--staging-dir", default=None, metavar="DIR")
+    stage.set_defaults(handler=_cmd_ledger_stage)
+
+    verify = ledger_sub.add_parser("verify", help="ledger 整合性（規則10）を検証する")
+    verify.add_argument("--json", action="store_true", dest="json_output")
+    verify.add_argument("--today", default=None, metavar="YYYY-MM-DD")
+    verify.set_defaults(handler=_cmd_ledger_verify)
