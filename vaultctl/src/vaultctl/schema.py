@@ -16,12 +16,13 @@ EXTRA_KEYS = {
     "concept": {"domain", "related", "sources", "assessment", "risk"},
     "entity": {"aliases", "related"},
     "meta": set(),
+    "overview": set(),
 }
 STATUSES = {"developing", "evergreen"}
 DIR_BY_TYPE = {"concept": "wiki/concepts", "source": "wiki/sources", "entity": "wiki/entities"}
-META_TYPE = "meta"
+META_TYPES = {"meta", "overview"}
 
-ALL_TYPES = KNOWLEDGE_TYPES | {META_TYPE}
+ALL_TYPES = KNOWLEDGE_TYPES | META_TYPES
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
@@ -107,11 +108,12 @@ def _check_location(page: Page) -> list[Finding]:
     if ptype not in ALL_TYPES:
         return []
     if is_meta_page(page.relpath):
-        if ptype != META_TYPE:
+        if ptype not in META_TYPES:
             return [_violation(page, "3", f"meta の配置ですが type={ptype} です")]
         return []
-    if ptype == META_TYPE:
-        return [_violation(page, "3", "type=meta ですが meta の配置ではありません")]
+    if ptype in META_TYPES:
+        return [_violation(
+            page, "3", f"type={ptype} ですが meta の配置ではありません")]
     expected = DIR_BY_TYPE[ptype]
     if not page.relpath.startswith(expected + "/"):
         return [_violation(page, "3", f"type={ptype} は {expected}/ に置く必要があります")]
