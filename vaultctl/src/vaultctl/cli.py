@@ -9,7 +9,7 @@ from datetime import date
 from pathlib import Path
 
 from vaultctl.findings import sort_findings
-from vaultctl.frontmatter import iter_pages
+from vaultctl.frontmatter import collect_pages
 from vaultctl.hashing import canonical_json
 from vaultctl.ledger import (
     LedgerError,
@@ -18,6 +18,15 @@ from vaultctl.ledger import (
     check_refresh_due,
     check_review_status,
     stage_ledger_writes,
+)
+from vaultctl.lint import (
+    EXIT_OK,
+    EXIT_REVIEW,
+    EXIT_USAGE,
+    EXIT_VIOLATION,
+    format_json,
+    format_text,
+    run_lint,
 )
 from vaultctl.plan import PlanError, build_plan, load_bundle
 from vaultctl.vault import VaultError, resolve_vault
@@ -47,6 +56,7 @@ def register_subcommands(sub: argparse._SubParsersAction) -> None:
     _add_apply_parser(sub)
     _add_recover_parser(sub)
     _add_ledger_parser(sub)
+    _add_lint_parser(sub)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -192,9 +202,10 @@ def _cmd_ledger_verify(args) -> int:
             print(f"--today は YYYY-MM-DD 形式で指定する: {args.today}", file=sys.stderr)
             return 64
 
-    pages = list(iter_pages(vault.root))
+    pages, unreadable = collect_pages(vault.root)
     findings = sort_findings(
         [
+            *unreadable,
             *check_page_ledger_consistency(vault.root, pages),
             *check_refresh_due(vault.root, today),
             *check_review_status(vault.root),
@@ -242,3 +253,37 @@ def _add_ledger_parser(sub) -> None:
     verify.add_argument("--json", action="store_true", dest="json_output")
     verify.add_argument("--today", default=None, metavar="YYYY-MM-DD")
     verify.set_defaults(handler=_cmd_ledger_verify)
+
+
+def _cmd_lint(args) -> int:
+    if args.today is None:
+        today = date.today()
+    else:
+        try:
+            today = date.fromisoformat(args.today)
+        except ValueError:
+            print(f"--today は YYYY-MM-DD 形式で指定する: {args.today}", file=sys.stderr)
+            return EXIT_USAGE
+
+    try:
+        vault = resolve_vault(args.vault)
+    except VaultError as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_USAGE
+
+    report = run_lint(vault, today=today)
+    print(format_json(report) if args.json_output else format_text(report), end="")
+
+    if report.violations:
+        return EXIT_VIOLATION
+    if report.reviews:
+        return EXIT_REVIEW
+    return EXIT_OK
+
+
+def _add_lint_parser(sub) -> None:
+    """`register_subcommands()` の中から呼ぶ。`--vault` は親 parser 側にある。"""
+    parser = sub.add_parser("lint", help="vault を検査する")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="JSON で出力する")
+    parser.add_argument("--today", default=None, metavar="YYYY-MM-DD", help="基準日（既定は今日）")
+    parser.set_defaults(handler=_cmd_lint)
