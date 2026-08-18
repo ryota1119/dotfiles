@@ -2,18 +2,53 @@
 
 set -euo pipefail
 
+if ! command -v opencode >/dev/null 2>&1; then
+  printf '%s\n' "skip: opencode が見つからないため OpenCode config テストを実行しなかった（MCP定義とagent定義は未検証）"
+  exit 0
+fi
+
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 test_root=$(mktemp -d "${TMPDIR:-/tmp}/test-opencode-config.XXXXXX")
 trap 'rm -rf "$test_root"' EXIT
 
+stub_bin="$test_root/stub-bin"
+mkdir -p "$stub_bin"
+cat >"$stub_bin/op" <<'EOF'
+#!/bin/sh
+# stub for the `op` binary that chezmoi's onepasswordRead calls
+case "$1" in
+  account)
+    printf '[{"url":"my.1password.com","email":"test@example.com","user_uuid":"TESTUSER","account_uuid":"TESTACCOUNT"}]\n'
+    exit 0 ;;
+  signin) printf 'stub-session-token\n'; exit 0 ;;
+esac
+ref=""
+for a in "$@"; do
+  case "$a" in op://*) ref="$a" ;; esac
+done
+case "$ref" in
+  *"X Developer Client Secret/username") printf 'test-client-id' ;;
+  *"X Developer Client Secret/password") printf 'test-client-secret' ;;
+  *"SocialData/api_key") printf 'test-socialdata-api-key' ;;
+  *) printf 'unexpected op ref: %s\n' "$ref" >&2; exit 1 ;;
+esac
+EOF
+chmod +x "$stub_bin/op"
+
+CLIENT_ID=$("$stub_bin/op" read 'op://Personal/X Developer Client Secret/username')
+CLIENT_SECRET=$("$stub_bin/op" read 'op://Personal/X Developer Client Secret/password')
+SOCIALDATA_API_KEY=$("$stub_bin/op" read 'op://Personal/SocialData/api_key')
+
+mkdir -p "$test_root/xdg-config/opencode"
+PATH="$stub_bin:$PATH" chezmoi execute-template --source "$repo_root" \
+  <"$repo_root/dot_config/opencode/private_opencode.jsonc.tmpl" \
+  >"$test_root/xdg-config/opencode/opencode.jsonc"
+
 export HOME="$test_root/home"
 export XDG_CONFIG_HOME="$test_root/xdg-config"
 export OPENCODE_DISABLE_PROJECT_CONFIG=1
-export CLIENT_ID="test-client-id"
-export CLIENT_SECRET="test-client-secret"
-export SOCIALDATA_API_KEY="test-socialdata-api-key"
 mkdir -p "$HOME" "$XDG_CONFIG_HOME"
-cp -R "$repo_root/dot_config/opencode" "$XDG_CONFIG_HOME/opencode"
+cp -R "$repo_root/dot_config/opencode/agent" "$XDG_CONFIG_HOME/opencode/agent"
 
 config_output="$test_root/config.json"
 opencode debug config >"$config_output"
@@ -45,6 +80,11 @@ const expected = {
   playwright: {
     type: "local",
     command: ["npx", "@playwright/mcp@latest"],
+    enabled: true,
+  },
+  openrouter: {
+    type: "remote",
+    url: "https://mcp.openrouter.ai/mcp",
     enabled: true,
   },
   xapi: {
@@ -84,7 +124,7 @@ const expected = {
 const actualNames = Object.keys(config.mcp ?? {}).sort()
 const expectedNames = Object.keys(expected).sort()
 if (Object.hasOwn(config.mcp ?? {}, "notion")) throw new Error("Notion MCP must not exist")
-if (actualNames.length !== 9) throw new Error(`Expected 9 MCPs, got ${actualNames.length}`)
+if (actualNames.length !== 10) throw new Error(`Expected 10 MCPs, got ${actualNames.length}`)
 if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {
   throw new Error(`Unexpected MCP set: ${JSON.stringify(actualNames)}`)
 }
