@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from vaultctl.hashing import canonical_json
-from vaultctl.plan import build_plan, load_bundle
-from vaultctl.plan import PlanError
+from vaultctl.plan import PlanError, build_plan, load_bundle
 from vaultctl.vault import VaultError, resolve_vault
 
 
@@ -33,6 +33,7 @@ def register_subcommands(sub: argparse._SubParsersAction) -> None:
     plan_parser.add_argument("--bundle", required=True, metavar="B.json")
     plan_parser.add_argument("--out", required=True, metavar="P.json")
     plan_parser.set_defaults(handler=cmd_plan)
+    _add_apply_parser(sub)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,3 +59,34 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_usage(sys.stderr)
         return 64
     return int(args.handler(args))
+
+
+def _add_apply_parser(sub) -> None:
+    parser = sub.add_parser("apply", help="承認済みプランを vault に適用する")
+    parser.add_argument("--plan", required=True, help="plan.json のパス")
+    parser.add_argument(
+        "--approved-plan-sha256",
+        dest="approved_plan_sha256",
+        required=True,
+        help="承認済みプランハッシュ",
+    )
+    parser.set_defaults(handler=_cmd_apply)
+
+
+def _cmd_apply(args) -> int:
+    from vaultctl.apply import ApplyError, apply_plan
+    from vaultctl.lock import LockHeld
+    from vaultctl.vault import VaultError
+
+    vault = resolve_vault(args.vault)
+    plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+    try:
+        journal = apply_plan(vault, plan, args.approved_plan_sha256)
+    except (ApplyError, LockHeld, VaultError) as exc:
+        print(f"apply 失敗: {exc}", file=sys.stderr)
+        return 1
+    print(
+        f"applied {len(journal['applied'])} files "
+        f"(operation_id={journal['operation_id']}, state={journal['state']})"
+    )
+    return 0
