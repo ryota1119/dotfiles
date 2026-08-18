@@ -149,4 +149,8 @@ def collect_pages(root: Path) -> tuple[list[Page], list[Finding]]:
             findings.append(_Finding(
                 rule="1", level="violation", path=relpath,
                 message=f"frontmatter を読めません: {exc}"))
+        except (UnicodeDecodeError, OSError) as exc:
+            findings.append(_Finding(
+                rule="1", level="violation", path=relpath,
+                message=f"ファイルを読めません: {exc}"))
     return pages, findings
