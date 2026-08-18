@@ -9,3 +9,9 @@ tests/
 
 # 1Password連携のセットアップスクリプトはホームへ展開しない
 scripts/
+
+# vaultctl のソースはホームへ展開しない（uv tool install で配布する）
+vaultctl/
+
+# 開発用の git worktree はホームへ展開しない
+worktrees/
