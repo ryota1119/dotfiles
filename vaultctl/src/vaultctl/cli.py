@@ -34,6 +34,7 @@ def register_subcommands(sub: argparse._SubParsersAction) -> None:
     plan_parser.add_argument("--out", required=True, metavar="P.json")
     plan_parser.set_defaults(handler=cmd_plan)
     _add_apply_parser(sub)
+    _add_recover_parser(sub)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -89,4 +90,40 @@ def _cmd_apply(args) -> int:
         f"applied {len(journal['applied'])} files "
         f"(operation_id={journal['operation_id']}, state={journal['state']})"
     )
+    return 0
+
+
+def _add_recover_parser(sub) -> None:
+    parser = sub.add_parser("recover", help="未完了トランザクションを巻き戻す")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="検出結果を表示するだけで、何も変更しない",
+    )
+    parser.set_defaults(handler=_cmd_recover)
+
+
+def _cmd_recover(args) -> int:
+    from vaultctl.journal import read_journal
+    from vaultctl.recover import find_incomplete, recover_all
+
+    vault = resolve_vault(args.vault)
+    if args.dry_run:
+        txs = find_incomplete(vault)
+        for tx in txs:
+            journal = read_journal(tx.journal_path)
+            print(
+                f"{journal['operation_id']}\t{journal['state']}\t"
+                f"{len(journal.get('applied', []))} files"
+            )
+        print(f"未完了 {len(txs)} 件（--dry-run のため巻き戻していない）")
+        return 0
+
+    results = recover_all(vault)
+    for result in results:
+        print(
+            f"{result.operation_id}\t{result.previous_state} -> rolled-back\t"
+            f"{len(result.restored)} files"
+        )
+    print(f"巻き戻し {len(results)} 件")
     return 0
