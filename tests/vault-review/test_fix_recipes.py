@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ import shutil
 import subprocess
 
 import pytest
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,6 +19,14 @@ EXPECTED_BEFORE_VIOLATIONS = 8
 EXPECTED_AFTER_VIOLATIONS = 5
 EXPECTED_BEFORE_RULE_COUNTS = {"2": 1, "3": 1, "4": 1, "5": 2, "6": 1, "7": 2}
 EXPECTED_AFTER_RULE_COUNTS = {"2": 1, "3": 1, "5": 2, "6": 1}
+EXPECTED_R9A_BEFORE_SUMMARY = {
+    "concept": {"developing": 1, "evergreen": 3},
+    "source": {"developing": 0, "evergreen": 2},
+}
+EXPECTED_R9A_AFTER_SUMMARY = {
+    "concept": {"developing": 0, "evergreen": 4},
+    "source": {"developing": 0, "evergreen": 2},
+}
 
 
 def _vaultctl_command() -> list[str]:
@@ -59,6 +69,24 @@ def _rule_counts(payload: dict) -> dict[str, int]:
     return counts
 
 
+def _rule9a_summary(payload: dict) -> dict[str, dict[str, int]]:
+    summary: dict[str, dict[str, int]] = {}
+    pattern = re.compile(
+        r"type=(?P<type>\w+) developing=(?P<developing>\d+) "
+        r"evergreen=(?P<evergreen>\d+)"
+    )
+    for finding in payload["findings"]:
+        if finding["rule"] != "9-a" or not finding["message"].startswith("昇格待ちキュー:"):
+            continue
+        match = pattern.search(finding["message"])
+        assert match is not None
+        summary[match.group("type")] = {
+            "developing": int(match.group("developing")),
+            "evergreen": int(match.group("evergreen")),
+        }
+    return summary
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
@@ -68,6 +96,20 @@ def _frontmatter_value(page: Path, key: str) -> str:
         if line.startswith(f"{key}:"):
             return line.split(":", 1)[1].strip()
     pytest.fail(f"frontmatter に {key} がありません: {page}")
+
+
+def _split_frontmatter_bytes(content: bytes) -> tuple[bytes, bytes]:
+    assert content.startswith(b"---\n")
+    closing = content.find(b"\n---\n", len(b"---\n"))
+    assert closing != -1
+    return content[len(b"---\n") : closing], content[closing + len(b"\n---\n") :]
+
+
+def _frontmatter_dict(content: bytes) -> dict:
+    frontmatter, _ = _split_frontmatter_bytes(content)
+    parsed = yaml.safe_load(frontmatter.decode("utf-8"))
+    assert isinstance(parsed, dict)
+    return parsed
 
 
 def _rule7_slug(payload: dict, message_prefix: str) -> str:
@@ -228,3 +270,98 @@ def test_rule3_move_plan_has_create_and_delete_without_apply(tmp_path: Path) -> 
     ]
     assert source.exists()
     assert not (vault / "wiki/sources/fixture-badtype.md").exists()
+
+
+def test_rule9a_bundle_plan_apply_preserves_body_and_updates_summary(tmp_path: Path) -> None:
+    vault = tmp_path / "fixture-vault"
+    subprocess.run(["bash", str(FIXTURE_SCRIPT), str(vault)], check=True)
+    env = os.environ.copy()
+    env["XDG_STATE_HOME"] = str(tmp_path / "state")
+
+    page = vault / "wiki/concepts/fixture-connector.md"
+    evergreen_bytes = page.read_bytes()
+    developing_bytes = evergreen_bytes.replace(
+        b"status: evergreen\n", b"status: developing\n", 1
+    )
+    assert developing_bytes != evergreen_bytes
+    page.write_bytes(developing_bytes)
+
+    before = _lint(vault, env)
+    assert before["counts"]["violation"] == EXPECTED_BEFORE_VIOLATIONS
+    assert _rule_counts(before) == EXPECTED_BEFORE_RULE_COUNTS
+    assert _rule9a_summary(before) == EXPECTED_R9A_BEFORE_SUMMARY
+
+    staged_bytes = developing_bytes.replace(
+        b"status: developing\n", b"status: evergreen\n", 1
+    )
+    staging = tmp_path / "rule9a" / "staging"
+    staging.mkdir(parents=True)
+    staged_page = staging / page.name
+    staged_page.write_bytes(staged_bytes)
+
+    bundle_path = tmp_path / "rule9a" / "bundle.json"
+    plan_path = tmp_path / "rule9a" / "plan.json"
+    _write_json(
+        bundle_path,
+        {
+            "schema": "vaultctl.bundle.v1",
+            "operation_id": "review-20260818T000003-rule9a-promote",
+            "operation_type": "review",
+            "writes": [
+                {
+                    "path": "wiki/concepts/fixture-connector.md",
+                    "mode": "replace",
+                    "content_file": str(staged_page.resolve()),
+                }
+            ],
+        },
+    )
+    _run_vaultctl(
+        vault, env, "plan", "--bundle", str(bundle_path), "--out", str(plan_path)
+    )
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert [(write["mode"], write["path"]) for write in plan["writes"]] == [
+        ("replace", "wiki/concepts/fixture-connector.md")
+    ]
+
+    before_frontmatter = _frontmatter_dict(developing_bytes)
+    staged_frontmatter = _frontmatter_dict(staged_bytes)
+    diff_keys = {
+        key
+        for key in before_frontmatter.keys() | staged_frontmatter.keys()
+        if before_frontmatter.get(key) != staged_frontmatter.get(key)
+    }
+    assert diff_keys == {"status"}
+
+    _, before_body = _split_frontmatter_bytes(developing_bytes)
+    _, staged_body = _split_frontmatter_bytes(staged_bytes)
+    before_body_sha256 = hashlib.sha256(before_body).hexdigest()
+    staged_body_sha256 = hashlib.sha256(staged_body).hexdigest()
+    assert before_body_sha256 == staged_body_sha256
+
+    _run_vaultctl(
+        vault,
+        env,
+        "apply",
+        "--plan",
+        str(plan_path),
+        "--approved-plan-sha256",
+        plan["approval_sha256"],
+    )
+    applied_bytes = page.read_bytes()
+    applied_frontmatter = _frontmatter_dict(applied_bytes)
+    applied_diff_keys = {
+        key
+        for key in before_frontmatter.keys() | applied_frontmatter.keys()
+        if before_frontmatter.get(key) != applied_frontmatter.get(key)
+    }
+    assert applied_diff_keys == {"status"}
+
+    _, applied_body = _split_frontmatter_bytes(applied_bytes)
+    applied_body_sha256 = hashlib.sha256(applied_body).hexdigest()
+    assert applied_body_sha256 == before_body_sha256
+
+    after = _lint(vault, env)
+    assert after["counts"]["violation"] == EXPECTED_BEFORE_VIOLATIONS
+    assert _rule_counts(after) == EXPECTED_BEFORE_RULE_COUNTS
+    assert _rule9a_summary(after) == EXPECTED_R9A_AFTER_SUMMARY
