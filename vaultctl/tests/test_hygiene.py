@@ -1,7 +1,11 @@
 from conftest import make_page
 
 from vaultctl.frontmatter import parse_page
-from vaultctl.hygiene import check_conflict_copies, check_empty_sections
+from vaultctl.hygiene import (
+    check_conflict_copies,
+    check_empty_sections,
+    check_trailing_newline,
+)
 
 
 def page(tmp_path, relpath, body):
@@ -79,3 +83,56 @@ def test_check_conflict_copies_ignores_directories_outside_scan_dirs(tmp_path):
 
 def test_check_conflict_copies_on_empty_vault(tmp_path):
     assert check_conflict_copies(tmp_path) == []
+
+
+# --- 規則11: 末尾改行の欠落（非原子的な追記による切断の検出） ---
+
+
+def test_check_trailing_newline_detects_missing_newline(tmp_path):
+    touch(tmp_path, "wiki/concepts/cut.md", text="---\ntype: concept\n---\n\n本文が途中で切れ")
+
+    found = check_trailing_newline(tmp_path)
+
+    assert [(f.rule, f.level, f.path) for f in found] == [
+        ("11", "violation", "wiki/concepts/cut.md"),
+    ]
+    assert "末尾が改行で終わっていません" in found[0].message
+
+
+def test_check_trailing_newline_allows_normal_page(tmp_path):
+    touch(tmp_path, "wiki/concepts/ok.md", text="---\ntype: concept\n---\n\n本文です。\n")
+
+    assert check_trailing_newline(tmp_path) == []
+
+
+def test_check_trailing_newline_ignores_empty_file(tmp_path):
+    path = tmp_path / "wiki" / "concepts" / "empty.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"")
+
+    assert check_trailing_newline(tmp_path) == []
+
+
+def test_check_trailing_newline_detects_unparsable_file(tmp_path):
+    """frontmatter が壊れていても不正な UTF-8 を含んでいても、バイト列で判定する。"""
+    path = tmp_path / "wiki" / "concepts" / "broken.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # frontmatter の終了区切りが無く、末尾は不完全な UTF-8 バイト列で切断されている
+    path.write_bytes("---\ntype: concept\n\n本文が途中で切れ".encode("utf-8")[:-1])
+
+    found = check_trailing_newline(tmp_path)
+
+    assert [(f.rule, f.level, f.path) for f in found] == [
+        ("11", "violation", "wiki/concepts/broken.md"),
+    ]
+
+
+def test_check_trailing_newline_ignores_non_wiki_dirs(tmp_path):
+    touch(tmp_path, "inbox/memo.md", text="末尾改行なし")
+    touch(tmp_path, ".raw/note.md", text="末尾改行なし")
+
+    assert check_trailing_newline(tmp_path) == []
+
+
+def test_check_trailing_newline_on_empty_vault(tmp_path):
+    assert check_trailing_newline(tmp_path) == []

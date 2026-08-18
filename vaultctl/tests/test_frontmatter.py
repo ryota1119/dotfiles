@@ -154,3 +154,52 @@ def test_collect_pages_reports_unreadable_page_and_keeps_going(tmp_path):
     assert [(f.rule, f.level, f.path) for f in findings] == [
         ("1", "violation", "wiki/broken.md")
     ]
+
+
+def test_collect_pages_reports_invalid_utf8_page_and_keeps_going(tmp_path):
+    from vaultctl.frontmatter import collect_pages
+
+    root = tmp_path / "vault"
+    (root / "wiki").mkdir(parents=True)
+    # 不正な UTF-8 バイト列（0xff は UTF-8 として解釈できない）
+    (root / "wiki" / "bad-bytes.md").write_bytes(
+        b"---\ntype: meta\ntitle: \xff\xfe\n---\n\n# bad\n")
+    (root / "wiki" / "ok.md").write_text(
+        "---\ntype: meta\ntitle: ok\nstatus: evergreen\n"
+        "created: 2026-08-01\nupdated: 2026-08-01\ntags:\n  - meta\n---\n\n# ok\n",
+        encoding="utf-8",
+    )
+
+    pages, findings = collect_pages(root)
+
+    assert [p.relpath for p in pages] == ["wiki/ok.md"]
+    assert [(f.rule, f.level, f.path) for f in findings] == [
+        ("1", "violation", "wiki/bad-bytes.md")
+    ]
+    assert "読めません" in findings[0].message
+
+
+def test_run_lint_survives_invalid_utf8_page(tmp_path, monkeypatch):
+    from datetime import date
+
+    from vaultctl.lint import run_lint
+    from vaultctl.vault import resolve_vault
+
+    root = tmp_path / "vault"
+    (root / "wiki").mkdir(parents=True)
+    (root / "inbox").mkdir()
+    state_home = tmp_path / "state"
+    state_home.mkdir()
+    monkeypatch.setenv("XDG_STATE_HOME", str(state_home))
+    monkeypatch.delenv("VAULTCTL_VAULT", raising=False)
+    (root / "wiki" / "index.md").write_text(
+        "---\ntype: meta\ntitle: index\nstatus: evergreen\n"
+        "created: 2026-08-01\nupdated: 2026-08-01\ntags:\n  - meta\n---\n\n# index\n",
+        encoding="utf-8",
+    )
+    (root / "wiki" / "bad-bytes.md").write_bytes(
+        b"---\ntype: meta\ntitle: \xff\xfe\n---\n\n# bad\n")
+
+    report = run_lint(resolve_vault(str(root)), today=date(2026, 8, 17))
+
+    assert any(f.path == "wiki/bad-bytes.md" and f.rule == "1" for f in report.findings)

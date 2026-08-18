@@ -99,3 +99,18 @@ def test_check_pages_sorts_findings_across_pages(tmp_path):
         ("2", "wiki/sources/z.md"),
     ]
     assert {f.level for f in findings} == {"violation"}
+
+
+def test_overview_type_at_wiki_root_has_no_findings(tmp_path):
+    p = page(tmp_path, "wiki/overview.md", type="overview", status="evergreen")
+    assert check_page(p) == []
+
+
+def test_rule3_reports_overview_outside_meta_location(tmp_path):
+    p = page(tmp_path, "wiki/concepts/foo.md", type="overview")
+    assert messages(check_page(p), "3") != []
+
+
+def test_rule1_reports_extra_key_for_overview(tmp_path):
+    p = page(tmp_path, "wiki/overview.md", type="overview", related=["[[a]]"])
+    assert messages(check_page(p), "1") == ["type=overview では使えないキーです: related"]

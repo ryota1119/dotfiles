@@ -262,7 +262,7 @@ def test_run_lint_splits_violations_and_reviews(tmp_path, monkeypatch):
 
     report = run_lint(vault, today=TODAY)
 
-    assert {f.rule for f in report.violations} <= {"1", "2", "3", "4", "5", "6", "7", "8"}
+    assert {f.rule for f in report.violations} <= {"1", "2", "3", "4", "5", "6", "7", "8", "11"}
     assert {f.rule for f in report.reviews} <= {"9-a", "9-b", "10-a", "10-b", "10-c", "10-d"}
     assert len(report.violations) + len(report.reviews) == len(report.findings)
 
@@ -367,3 +367,26 @@ def test_cli_lint_json_output_is_parseable(tmp_path, monkeypatch, capsys):
     assert code == EXIT_VIOLATION
     assert payload["schema"] == LINT_REPORT_SCHEMA
     assert payload["counts"]["violation"] >= 1
+
+
+def test_run_lint_reports_missing_trailing_newline(tmp_path, monkeypatch):
+    """規則11: 末尾改行の欠落。frontmatter を読めないページでも検出できること。"""
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    root = tmp_path / "cut"
+    (root / "inbox").mkdir(parents=True)
+    write(root, "wiki/index.md", page_text(base_fm("meta", "索引"), "## 索引\n\n- [[cut]]\n"))
+    # 末尾が改行で終わらない正常な frontmatter のページ
+    write(root, "wiki/concepts/cut.md",
+          page_text(base_fm("concept", "切断"), "## 概要\n\n本文が途中で切れ"))
+    # frontmatter が壊れており、かつ末尾が改行で終わらないページ
+    (root / "wiki" / "concepts" / "broken.md").write_bytes(
+        "---\ntype: concept\n\n本文が途中で切れ".encode("utf-8")[:-1])
+    vault = resolve_vault(str(root))
+
+    report = run_lint(vault, today=TODAY)
+
+    rule11 = sorted(f.path for f in report.findings if f.rule == "11")
+    assert rule11 == ["wiki/concepts/broken.md", "wiki/concepts/cut.md"]
+    assert all(f.level == "violation" for f in report.findings if f.rule == "11")
+    # 規則1（frontmatter を読めない）と規則11は両立する
+    assert "wiki/concepts/broken.md" in [f.path for f in report.findings if f.rule == "1"]
