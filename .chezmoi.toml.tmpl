@@ -9,11 +9,11 @@
      キー名は "onepassword" だとchezmoi組み込みの予約データ(op連携設定)と衝突するため
      gitIdentity / personalOnepasswordAccount にしている。 */}}
 [data]
-    {{/* op://Personal/... を引くときに使うアカウント。scripts/setup-*.sh の ACCOUNT と同じ値。 */}}
+    {{- /* op://Personal/... を引くときに使うアカウント。scripts/setup-*.sh の ACCOUNT と同じ値。 */}}
     personalOnepasswordAccount = {{ promptStringOnce . "personalOnepasswordAccount" "1Password account for op://Personal references (URL/email/UUID)" "my.1password.com" | quote }}
 
 [data.gitIdentity]
-    {{/* git identityを引くアカウント。会社PCでは会社アカウントを指定する。 */}}
+    {{- /* git identityを引くアカウント。会社PCでは会社アカウントを指定する。 */}}
     onepasswordAccount        = {{ promptStringOnce . "gitIdentity.onepasswordAccount" "1Password account for git identity (URL/email/UUID)" "my.1password.com" | quote }}
     onepasswordUsernamePath   = {{ promptStringOnce . "gitIdentity.onepasswordUsernamePath" "1Password path (git username)" "op://Personal/GitHub - ryota1119/username" | quote }}
     onepasswordEmailPath      = {{ promptStringOnce . "gitIdentity.onepasswordEmailPath" "1Password path (git email)" "op://Personal/GitHub - ryota1119/email" | quote }}
