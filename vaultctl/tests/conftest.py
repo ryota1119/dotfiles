@@ -20,7 +20,22 @@ def synthetic_vault_root(tmp_path: Path) -> Path:
     (root / "wiki" / "meta" / "ledgers").mkdir(parents=True)
     (root / "inbox").mkdir()
     (root / ".raw").mkdir()
-    (root / "wiki" / "index.md").write_text("# index\n", encoding="utf-8")
+    # 実 vault の index.md は type: meta の frontmatter を持つ（T7 の追加決定事項1）。
+    # frontmatter が無いと iter_pages() が FrontmatterError で落ちるため、実物に合わせる。
+    (root / "wiki" / "index.md").write_text(
+        "---\n"
+        "type: meta\n"
+        "title: index\n"
+        "status: evergreen\n"
+        "created: 2026-08-01\n"
+        "updated: 2026-08-01\n"
+        "tags:\n"
+        "  - meta\n"
+        "---\n"
+        "\n"
+        "# index\n",
+        encoding="utf-8",
+    )
     return root
 
 
