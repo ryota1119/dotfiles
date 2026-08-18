@@ -131,3 +131,22 @@ def dump_frontmatter(fm: dict) -> str:
 
 def render_page(fm: dict, body: str) -> str:
     return "---\n" + dump_frontmatter(fm) + "---\n\n" + body
+
+
+def collect_pages(root: Path) -> tuple[list[Page], list[Finding]]:
+    """`iter_pages` の耐障害版。読めないページは規則1の violation にして列挙を続ける。"""
+    from .findings import Finding as _Finding  # 循環 import を避けるため関数内で解決
+
+    pages: list[Page] = []
+    findings: list[_Finding] = []
+    paths = sorted((root / "wiki").rglob("*.md"),
+                   key=lambda p: p.relative_to(root).as_posix())
+    for path in paths:
+        relpath = path.relative_to(root).as_posix()
+        try:
+            pages.append(parse_page(root, path))
+        except FrontmatterError as exc:
+            findings.append(_Finding(
+                rule="1", level="violation", path=relpath,
+                message=f"frontmatter を読めません: {exc}"))
+    return pages, findings

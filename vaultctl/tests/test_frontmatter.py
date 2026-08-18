@@ -134,3 +134,23 @@ def test_render_page_round_trips_through_parse_page(tmp_path):
     assert page.frontmatter == fm
     assert page.body == body
     assert render_page(page.frontmatter, page.body) == path.read_text(encoding="utf-8")
+
+
+def test_collect_pages_reports_unreadable_page_and_keeps_going(tmp_path):
+    from vaultctl.frontmatter import collect_pages
+
+    root = tmp_path / "vault"
+    (root / "wiki").mkdir(parents=True)
+    (root / "wiki" / "broken.md").write_text("# frontmatter なし\n", encoding="utf-8")
+    (root / "wiki" / "ok.md").write_text(
+        "---\ntype: meta\ntitle: ok\nstatus: evergreen\n"
+        "created: 2026-08-01\nupdated: 2026-08-01\ntags:\n  - meta\n---\n\n# ok\n",
+        encoding="utf-8",
+    )
+
+    pages, findings = collect_pages(root)
+
+    assert [p.relpath for p in pages] == ["wiki/ok.md"]
+    assert [(f.rule, f.level, f.path) for f in findings] == [
+        ("1", "violation", "wiki/broken.md")
+    ]
