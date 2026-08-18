@@ -4,7 +4,7 @@
 set -eu
 
 ACCOUNT="my.1password.com"
-XAPI_ITEM="yqraaqfomzo7uvfjlyy5zvemfa"    # 1Password: X Developer クライアントシークレット (Personal)
+XAPI_ITEM="X Developer Client Secret"    # 1Password: Personalボルト (個人アカウント)
 XSERVER_ITEM="Xserver"                    # 1Password: Xserver (Development, 案件固有のため)
 SHINO_MUSIC_SCHOOL_DIR="$HOME/Workspace/repos/github.com/ray-on-code/shino_music_school"
 

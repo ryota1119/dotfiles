@@ -18,8 +18,12 @@ chezmoi init --apply git@github.com:ryota1119/dotfiles.git
 
 | 質問 | 意味 |
 | --- | --- |
-| 1Password account | `op read` に渡すアカウント。複数アカウントへ同時サインインしていると `account` 未指定では `multiple accounts found` になるため必須 |
+| 1Password account for op://Personal references | `op://Personal/...` を引くときに `op read` へ渡すアカウント。個人アカウントを指定する |
+| 1Password account for git identity | Git identity を引くときのアカウント。会社PCでは会社アカウントを指定する |
 | 1Password path (git username / email / SSH signing key) | Git identity の取得元。マシンごとに使い分ける |
+
+アカウント指定を2つに分けているのは、git identity は会社アカウント・MCPの認証情報は
+個人アカウントのPersonalボルト、というマシンがあるため。1つの変数では両立できない。
 
 回答を変更したいときは `~/.config/chezmoi/chezmoi.toml` を直接編集する。
 `promptStringOnce` は保存済みの値を優先するため、CLIフラグでは上書きされない。
@@ -70,11 +74,15 @@ opencode mcp auth google-drive
 ```
 
 X API MCPの`CLIENT_ID`/`CLIENT_SECRET`、Socialdata MCPの`SOCIALDATA_API_KEY`は、
-`dot_config/opencode/opencode.jsonc.tmpl`内で`onepasswordRead`により1Passwordから
+`dot_config/opencode/private_opencode.jsonc.tmpl`内で`onepasswordRead`により1Passwordから
 解決される（`chezmoi apply`のたびに再解決されるため、ローテーション後は1Password側を
-更新してから`chezmoi apply`するだけでよい）。実値はchezmoi source（git管理下）へは
-保存しないが、適用先の`~/.config/opencode/opencode.jsonc`には平文で書き込まれる
-（OpenCode自体が`{env:VAR}`形式でしか環境変数を解決できないため）。
+更新してから`chezmoi apply`するだけでよい）。参照先は個人アカウントのPersonalボルトなので、
+アカウント指定には`personalOnepasswordAccount`を使う。
+
+実値はchezmoi source（git管理下）へは保存しないが、適用先の
+`~/.config/opencode/opencode.jsonc`には平文で書き込まれる（OpenCodeが`{env:VAR}`形式でしか
+環境変数を解決できず、その環境変数を常時供給する手段を別途持たないため）。平文が残ることを
+前提に、ソース側を`private_`プレフィックスにしてモード0600で展開する。
 
 Hacker News、Qiita、Zenn、SocialdataのローカルMCPは、それぞれ
 `~/Workspace/repos/github.com/RayLabOrg/` 配下の `hn-mcp`、`qiita-mcp`、
@@ -99,8 +107,8 @@ tests/test-shared-skills.sh
 bash scripts/setup-claude-mcp.sh
 ```
 
-- `xapi`（userスコープ、全プロジェクト共通）：1Password「X Developer クライアント
-  シークレット」（Personal）
+- `xapi`（userスコープ、全プロジェクト共通）：1Password「X Developer Client Secret」
+  （Personal）
 - `xserver`（localスコープ、shino_music_school案件固有）：1Password「Xserver」
   （**Development**ボルト。案件固有クレデンシャルは`Muumuu-domain`とあわせて
   Personalから移動済み）。対象リポジトリが存在しない場合は登録をスキップする
@@ -126,9 +134,9 @@ MCPは`~/.codex/config.toml`を直接編集せず、`codex mcp add`で登録す�
 bash scripts/setup-codex-mcp.sh
 ```
 
-xapiは1Password「X Developer クライアントシークレット」（Personal、日本語タイトルの
-ため`op://`参照はitem IDで指定）、socialdata-mcpは「SocialData」（Personal）の
-`api_key`フィールドを参照する。
+xapiは1Password「X Developer Client Secret」（Personal）、socialdata-mcpは
+「SocialData」（Personal）の`api_key`フィールドを参照する。どちらも個人アカウント側の
+ボルトなので、`op read`には個人アカウントを渡す必要がある。
 
 Google Calendar/Gmail/Google Drive（remote MCP）はOpenCode専用の組み込みOAuthクライアントに
 依存しており、Codex側で同等の認証経路が未確認のため対象外。Notionも従来通り対象外。
