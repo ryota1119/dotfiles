@@ -5,7 +5,7 @@
 set -eu
 
 ACCOUNT="my.1password.com"
-XAPI_ITEM="yqraaqfomzo7uvfjlyy5zvemfa"    # 1Password: X Developer クライアントシークレット (Personal)
+XAPI_ITEM="X Developer Client Secret"    # 1Password: Personalボルト (個人アカウント)
 SOCIALDATA_ITEM="SocialData"              # 1Password: SocialData (Personal)
 
 CLIENT_ID=$(op read "op://Personal/${XAPI_ITEM}/username" --account "$ACCOUNT")

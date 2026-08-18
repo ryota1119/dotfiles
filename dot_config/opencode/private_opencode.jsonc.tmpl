@@ -30,11 +30,11 @@
       "type": "local",
       "command": ["npx", "-y", "@xdevplatform/xurl", "mcp", "https://api.x.com/mcp"],
       "enabled": true,
-      // op://の参照は日本語タイトルを扱えないため、item名ではなくID
-      // (1Password「X Developer クライアントシークレット」, Personalボルト)を直接指定している。
+      // 参照先は個人アカウントのPersonalボルト。git identityは会社アカウントを
+      // 使うマシンがあるため、アカウント指定は personalOnepasswordAccount を使う。
       "environment": {
-        "CLIENT_ID": {{ onepasswordRead "op://Personal/yqraaqfomzo7uvfjlyy5zvemfa/username" .gitIdentity.onepasswordAccount | quote }},
-        "CLIENT_SECRET": {{ onepasswordRead "op://Personal/yqraaqfomzo7uvfjlyy5zvemfa/password" .gitIdentity.onepasswordAccount | quote }}
+        "CLIENT_ID": {{ onepasswordRead "op://Personal/X Developer Client Secret/username" .personalOnepasswordAccount | quote }},
+        "CLIENT_SECRET": {{ onepasswordRead "op://Personal/X Developer Client Secret/password" .personalOnepasswordAccount | quote }}
       }
     },
     "hn-mcp": {
@@ -57,7 +57,7 @@
       "command": ["uv", "run", "--directory", "{env:HOME}/Workspace/repos/github.com/RayLabOrg/socialdata-mcp", "socialdata-mcp"],
       "enabled": true,
       "environment": {
-        "SOCIALDATA_API_KEY": {{ onepasswordRead "op://Personal/SocialData/api_key" .gitIdentity.onepasswordAccount | quote }}
+        "SOCIALDATA_API_KEY": {{ onepasswordRead "op://Personal/SocialData/api_key" .personalOnepasswordAccount | quote }}
       }
     }
   }

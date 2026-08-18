@@ -2,9 +2,18 @@
      以降は ~/.config/chezmoi/chezmoi.toml に保存された値がそのまま使われる。
      1Passwordで複数アカウントに同時サインインする運用のため、op readにどのアカウントを
      使うか明示する必要がある(account未指定だと "multiple accounts found" エラーになる)。
-     値は op://Personal/... の参照先が属するアカウントのURL/email/UUID等を指定する。
-     キー名は "onepassword" だとchezmoi組み込みの予約データ(op連携設定)と衝突するため gitIdentity にしている。 */}}
+
+     アカウント指定は用途ごとに分ける。git identityは会社アカウント、
+     opencodeのMCP認証情報は個人アカウントのPersonalボルト、というマシンがあるため、
+     1つの変数では両立できない。
+     キー名は "onepassword" だとchezmoi組み込みの予約データ(op連携設定)と衝突するため
+     gitIdentity / personalOnepasswordAccount にしている。 */}}
+[data]
+    {{/* op://Personal/... を引くときに使うアカウント。scripts/setup-*.sh の ACCOUNT と同じ値。 */}}
+    personalOnepasswordAccount = {{ promptStringOnce . "personalOnepasswordAccount" "1Password account for op://Personal references (URL/email/UUID)" "my.1password.com" | quote }}
+
 [data.gitIdentity]
+    {{/* git identityを引くアカウント。会社PCでは会社アカウントを指定する。 */}}
     onepasswordAccount        = {{ promptStringOnce . "gitIdentity.onepasswordAccount" "1Password account for git identity (URL/email/UUID)" "my.1password.com" | quote }}
     onepasswordUsernamePath   = {{ promptStringOnce . "gitIdentity.onepasswordUsernamePath" "1Password path (git username)" "op://Personal/GitHub - ryota1119/username" | quote }}
     onepasswordEmailPath      = {{ promptStringOnce . "gitIdentity.onepasswordEmailPath" "1Password path (git email)" "op://Personal/GitHub - ryota1119/email" | quote }}
