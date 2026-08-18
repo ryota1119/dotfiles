@@ -66,6 +66,27 @@ def build_graph(pages: Iterable[Page]) -> Graph:
     return Graph(pages=by_slug, by_relpath=by_relpath, targets=targets, backlinks=backlinks)
 
 
+def incoming_relpaths(graph: Graph, page: Page) -> set[str]:
+    """`page` を指す被リンク元の relpath 集合。ハブページと自分自身は除く。
+
+    規則5（孤立ページ）の除外規則そのもの。`vaultctl graph` の `in_degree` も
+    この関数を使い、定義が二重化しないようにする。
+    """
+    return {
+        src for src in graph.backlinks.get(page.slug, set())
+        if src != page.relpath and src not in HUB_RELPATHS
+    }
+
+
+def resolved_relpaths(graph: Graph, page: Page) -> set[str]:
+    """`page` の発リンクのうち、実在するページを指すものの relpath 集合。"""
+    return {
+        graph.pages[slug].relpath
+        for slug in graph.targets.get(page.relpath, [])
+        if slug in graph.pages
+    }
+
+
 def check_broken_links(graph: Graph) -> list[Finding]:
     """規則4: 解決先の無い wikilink。"""
     found: list[Finding] = []
@@ -84,11 +105,7 @@ def check_orphans(graph: Graph) -> list[Finding]:
     for relpath, page in graph.by_relpath.items():
         if is_meta_page(relpath):
             continue
-        incoming = {
-            src for src in graph.backlinks.get(page.slug, set())
-            if src != relpath and src not in HUB_RELPATHS
-        }
-        if not incoming:
+        if not incoming_relpaths(graph, page):
             found.append(Finding(
                 rule="5", level="violation", path=relpath,
                 message="どこからもリンクされていません（ハブページからのリンクは除く）"))

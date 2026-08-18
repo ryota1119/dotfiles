@@ -57,6 +57,7 @@ def register_subcommands(sub: argparse._SubParsersAction) -> None:
     _add_recover_parser(sub)
     _add_ledger_parser(sub)
     _add_lint_parser(sub)
+    _add_graph_parser(sub)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -287,3 +288,24 @@ def _add_lint_parser(sub) -> None:
     parser.add_argument("--json", action="store_true", dest="json_output", help="JSON で出力する")
     parser.add_argument("--today", default=None, metavar="YYYY-MM-DD", help="基準日（既定は今日）")
     parser.set_defaults(handler=_cmd_lint)
+
+
+def _cmd_graph(args) -> int:
+    from vaultctl.metrics import build_graph_report, format_json, format_text
+
+    try:
+        vault = resolve_vault(args.vault)
+    except VaultError as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_USAGE
+
+    report = build_graph_report(vault)
+    print(format_json(report) if args.json_output else format_text(report), end="")
+    return EXIT_OK
+
+
+def _add_graph_parser(sub) -> None:
+    """`register_subcommands()` の中から呼ぶ。`--vault` は親 parser 側にある。"""
+    parser = sub.add_parser("graph", help="wikilink グラフの指標を報告する（検査ではない）")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="JSON で出力する")
+    parser.set_defaults(handler=_cmd_graph)
