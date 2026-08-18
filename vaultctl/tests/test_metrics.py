@@ -71,6 +71,18 @@ def test_self_links_are_not_counted_in_in_degree(tmp_path, monkeypatch):
     assert pages["wiki/concepts/a.md"].backlinks == []
 
 
+def test_self_links_are_not_counted_in_out_degree(tmp_path, monkeypatch):
+    root = make_vault(tmp_path)
+    write(root, "wiki/index.md", page_text(base_fm("meta", "索引"), "- [[a]]\n- [[b]]\n"))
+    write(root, "wiki/concepts/a.md", page_text(base_fm("concept", "A"), "[[a]] と [[b]]\n"))
+    write(root, "wiki/concepts/b.md", page_text(base_fm("concept", "B"), "本文\n"))
+
+    pages = by_path(report(tmp_path, root, monkeypatch))
+
+    assert pages["wiki/concepts/a.md"].out_degree == 1
+    assert pages["wiki/concepts/a.md"].links == ["wiki/concepts/b.md"]
+
+
 def test_broken_links_are_not_counted_in_out_degree(tmp_path, monkeypatch):
     root = make_vault(tmp_path)
     write(root, "wiki/index.md", page_text(base_fm("meta", "索引"), "- [[a]]\n- [[b]]\n"))

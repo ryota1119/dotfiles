@@ -79,11 +79,16 @@ def incoming_relpaths(graph: Graph, page: Page) -> set[str]:
 
 
 def resolved_relpaths(graph: Graph, page: Page) -> set[str]:
-    """`page` の発リンクのうち、実在するページを指すものの relpath 集合。"""
+    """`page` の発リンクのうち、実在するページを指すものの relpath 集合。
+
+    自分自身へのリンクは除く。`incoming_relpaths` が自己リンクを除くのと
+    対称にするため。自分を指すリンクは他の知識との接続を作らないので、
+    in / out のどちらでも接続として数えない。
+    """
     return {
         graph.pages[slug].relpath
         for slug in graph.targets.get(page.relpath, [])
-        if slug in graph.pages
+        if slug in graph.pages and graph.pages[slug].relpath != page.relpath
     }
 
 
