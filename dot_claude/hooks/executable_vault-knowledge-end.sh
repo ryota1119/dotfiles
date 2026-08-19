@@ -18,7 +18,10 @@ set -uo pipefail
 STATE_DIR="${HOME}/.claude/.vault-knowledge-check"
 LOG_DIR="${HOME}/.claude/logs"
 LOCK_DIR="${HOME}/.claude/.vault-knowledge-lock"
-MIN_LINES=60                  # これ未満のトランスクリプトは「作業らしい会話」とみなさない
+MIN_DIGEST_BYTES=2000         # これ未満のダイジェストは「作業らしい会話」とみなさない。
+                              # 生の行数で判定すると、ツールを使わない会話主体の
+                              # セッションが不当に棄却される（2026-08-19に実測:
+                              # 45行のセッションからダイジェスト10,526バイトが出た）。
 MAX_MSG_CHARS=2000            # 1メッセージあたりの切り詰め
 MAX_DIGEST_BYTES=120000       # ダイジェスト全体の上限
 LOCK_WAIT_SECONDS=900         # 他セッションの保存を待つ上限
@@ -47,17 +50,18 @@ fi
 [ -d "$vault" ] || exit 0
 
 lines=$(wc -l < "$tpath" 2>/dev/null || echo 0)
-[ "$lines" -lt "$MIN_LINES" ] && exit 0
 
-# すでにVaultへ保存した／取り込んだセッションなら何もしない
-grep -qE '"(vault-save|vault-ingest|vault-research)"' "$tpath" 2>/dev/null && exit 0
+# すでにVaultへ保存した／取り込んだセッションなら何もしない。
+# スキル名の素の出現で判定すると、セッション開始時に注入される skill_listing
+# attachment（"names":[...,"vault-save",...]）に必ずヒットし、ほぼ全セッションが
+# 無条件スキップされる。Skillツールの実呼び出し形式に限定して判定する。
+grep -qE '"skill"[[:space:]]*:[[:space:]]*"vault-(save|ingest|research)"' "$tpath" 2>/dev/null && exit 0
 
 # 同一状態での二重起動を防ぐ。行数をキーに含めるので、/clear 後に会話が伸びた
 # 場合は改めて発火する。
 mkdir -p "$STATE_DIR" "$LOG_DIR" 2>/dev/null || exit 0
 marker="${STATE_DIR}/${sid}-${lines}"
 [ -e "$marker" ] && exit 0
-: > "$marker"
 
 # 30日より古いマーカーを掃除する（旧実装は掃除しておらず溜まり続けていた）
 find "$STATE_DIR" -type f -mtime +30 -delete 2>/dev/null || true
@@ -80,7 +84,20 @@ jq -r '
 
 [ -s "$digest" ] || { rm -f "$digest"; exit 0; }
 
-if [ "$(wc -c < "$digest")" -gt "$MAX_DIGEST_BYTES" ]; then
+# 「作業らしい会話」かどうかは、生のJSONL行数ではなくダイジェストの実バイト数で
+# 判定する。行数はツール結果やメタ行を含むため、ツールを使わない会話主体の
+# セッションを不当に棄却していた。
+dbytes=$(wc -c < "$digest" 2>/dev/null || echo 0)
+dbytes=${dbytes// /}
+if [ "${dbytes:-0}" -lt "$MIN_DIGEST_BYTES" ]; then
+  rm -f "$digest"
+  exit 0
+fi
+
+# ここまで通ったものだけを「保存対象」として marker を確定する。
+: > "$marker"
+
+if [ "$dbytes" -gt "$MAX_DIGEST_BYTES" ]; then
   head -c 40000 "$digest" > "${digest}.tmp"
   printf '\n\n[...中略: ダイジェストが上限を超えたため中間を省略...]\n\n' >> "${digest}.tmp"
   tail -c 80000 "$digest" >> "${digest}.tmp"
