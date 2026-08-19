@@ -141,11 +141,14 @@ xapiは1Password「X Developer Client Secret」（Personal）、socialdata-mcp�
 Google Calendar/Gmail/Google Drive（remote MCP）はOpenCode専用の組み込みOAuthクライアントに
 依存しており、Codex側で同等の認証経路が未確認のため対象外。Notionも従来通り対象外。
 
-claude-obsidianの15 skillはchezmoi管理に含めず、
-`~/Workspace/repos/github.com/AgriciDaniel/claude-obsidian/bin/setup-multi-agent.sh`
-を新しいマシンで実行して揃える（OpenCode側`~/.config/opencode/skills/`と同じ方針）。
+Knowledge Vault（Obsidian）はVault自体をGit管理しており、chezmoiが持つのは
+入口だけである。`dot_ai/skills/vault`（Global Gateway skill）と
+`export KNOWLEDGE_VAULT`（`.chezmoi.toml.tmpl`のdata変数）のみを管理し、
+`vault-save` / `vault-ingest` / `vault-research` / `vault-review` の各ワークフローと
+`librarian` / `researcher` / `reviewer` の役割定義はVault側の`.ai/`に置く。
 
-```sh
-bash bin/setup-multi-agent.sh --host codex --apply
-bash bin/setup-multi-agent.sh --host codex --check
-```
+新しいマシンでは、Vaultをcloneして`chezmoi apply`でGatewayとパスが揃えば、
+Vault内で起動したときにproject skillとproject agentが自動で読まれる。
+
+以前依存していたclaude-obsidianプラグインとvaultctl（トランザクション実行CLI）は
+撤去した。Git + 単一writerで代替している。
