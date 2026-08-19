@@ -12,7 +12,7 @@ description: >
   Also triggers on: "inboxを処理", "取り込んで", "vault-ingest", "クリップを取り込む",
   "週次の取り込み", "inboxを空にして", ".rawへ退避", "source-ledgerに登録".
 metadata:
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # vault-ingest — inbox のソースを取り込む
@@ -200,6 +200,47 @@ scripts/verify_archived.py --queue <queue.json> --out <delete-bundle.json> \
 delete 行を太字にし、各行に退避先と SHA256 一致確認を併記し、journal backup のパスを
 明記する。**「15件」と件数だけ書いて承認を求めない。**
 
+## ledger の locator 書き換え（Tx-B）
+
+`inbox/` から消したファイルを指す `origin.locator` は死ぬ。ledger の存在意義は出所が
+追えることなので、**実在しないパスを残さない。**
+
+```bash
+scripts/build_ledger_relocate.py --queue <queue.json> --out <bundle.json> \
+    --staging <staging ディレクトリ> --operation-id ingest-<...>-<slug> \
+    [--generated-at YYYY-MM-DD]
+```
+
+| `origin.kind` | 扱い |
+| --- | --- |
+| `file` で `locator` が `inbox/` 始まり | **`.raw/<name>` へ書き換える** |
+| `url` | **触らない**（inbox に依存していない） |
+
+**`locator` 以外のキーを1つも変えない。** `content_sha256` / `retrieved_at` /
+`refresh_due` / `pages` / `title` / `authority` / `content_kind` / `review_status` は
+既存値をそのまま維持する。スクリプトが差分キー集合を計算し、
+`sources.<id>.origin.locator`（と `generated_at`）以外が動いていたら**止まる**。
+
+**Tx-B は Tx-C より前に置く。** Tx-B が失敗しても inbox に原本が残っていれば元に戻せる。
+逆順だと「原本を消したが locator が古いまま」という中途半端な状態が残る。
+
+**Tx-B を Tx-A に混ぜない。** Tx-A は `.raw/` の create だけで完結させ、「退避が成功した」
+という事実を単独で確定させる。
+
+## reconcile モードの通し手順
+
+```
+1. scan_inbox.py                → queue.json、分類をボスへ提示して承認
+2. build_archive_bundle.py      → Tx-A: plan → 提示 → 承認 → apply
+3. verify_archived.py（検証のみ）→ G2 で .raw/ と inbox/ の SHA256 一致を確認
+4. build_ledger_relocate.py     → Tx-B: plan → 提示 → 承認 → apply
+5. verify_archived.py（bundle 生成）→ Tx-C: plan → 提示 → 承認 → apply
+6. lint --json を再実行して予測と照合
+```
+
+**lint の予測は「violation・review とも増減なし」。** reconcile はページを1枚も作らず、
+`.raw/` と `inbox/` はページ解析の対象外だから。ずれたら次の write を発行せず止まる。
+
 ## 承認ルール
 
 規約8節の `vault-ingest` 列を継承し、狭める方向にのみ上書きする。
@@ -241,4 +282,5 @@ delete 行を太字にし、各行に退避先と SHA256 一致確認を併記�
 | --- | --- |
 | `scripts/scan_inbox.py` | `inbox/` の走査・分類・`queue.json` の生成。読み取り専用 |
 | `scripts/build_archive_bundle.py` | `.raw/` への退避 bundle の組み立て（create のみ） |
+| `scripts/build_ledger_relocate.py` | `origin.locator` の `inbox/` → `.raw/` 書き換え bundle |
 | `scripts/verify_archived.py` | 削除前のゲート検証と delete bundle・承認提示ブロックの生成 |
