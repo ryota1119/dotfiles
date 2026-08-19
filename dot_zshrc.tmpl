@@ -59,3 +59,10 @@ fi
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
+
+# -----------------------------------------------------------------------------
+# Knowledge Vault（Obsidian / Claude Code・Codex 共通）
+# -----------------------------------------------------------------------------
+# Vault外のディレクトリから起動しても、global の vault Gateway skill が
+# ここを見て Vault を解決する。パスはマシンごとに異なるため chezmoi のdata変数で持つ。
+export KNOWLEDGE_VAULT={{ .knowledgeVault | quote }}

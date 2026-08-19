@@ -12,6 +12,10 @@
     {{- /* op://Personal/... を引くときに使うアカウント。scripts/setup-*.sh の ACCOUNT と同じ値。 */}}
     personalOnepasswordAccount = {{ promptStringOnce . "personalOnepasswordAccount" "1Password account for op://Personal references (URL/email/UUID)" "my.1password.com" | quote }}
 
+    {{- /* Knowledge Vault（Obsidian）の絶対パス。Claude Code / Codex 双方が $KNOWLEDGE_VAULT で参照する。
+           Google Drive上に置いているためマシンごとにパスが変わる。 */}}
+    knowledgeVault = {{ promptStringOnce . "knowledgeVault" "Absolute path to the Obsidian Knowledge Vault" "/Users/r-shinohara/Library/CloudStorage/GoogleDrive-admin@raylab.dev/マイドライブ/exocortex_v1_0" | quote }}
+
 [data.gitIdentity]
     {{- /* git identityを引くアカウント。会社PCでは会社アカウントを指定する。 */}}
     onepasswordAccount        = {{ promptStringOnce . "gitIdentity.onepasswordAccount" "1Password account for git identity (URL/email/UUID)" "my.1password.com" | quote }}

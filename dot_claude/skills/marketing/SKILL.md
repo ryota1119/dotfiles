@@ -44,7 +44,7 @@ metadata:
    - 改善：既存コンテンツや実績を分析し、改善案を提示する
 2. 会話コンテキストと既存資料から、目的・対象・媒体・トーン・CTAを推定する。
    品質や公開リスクに影響する情報だけが不足している場合に限り、作業前に確認する。
-3. 必要に応じてExocortexの関連ページやresearchの調査結果を参照する。
+3. 必要に応じて`vault`スキル経由でKnowledge Vaultの関連ページや、researchの調査結果を参照する。
    根拠が不足している場合は、事実と仮説を区別して示す。
 4. 戦略・企画では、選択肢と評価軸を整理し、推奨案と理由を提示する。
 5. 制作では、媒体の制約と想定読者に合わせてドラフトを作成する。
@@ -77,11 +77,12 @@ metadata:
 
 - 既定では成果物をチャット上に提示し、自動保存しない。
 - 継続利用する戦略、ターゲット像、訴求知識は、ユーザーの依頼がある場合に
-  Exocortexの`wiki/`へ記録する。
-- 実行が必要な作業は、ユーザーの依頼がある場合に`tasks/`へタスクとして記録する。
-- 単発の投稿文や記事ドラフトを`wiki/`へ知識として保存したり、`tasks/`へ本文を
-  保存したりしない。
-- Exocortexへ記録する場合は、作業前に`exocortex/CLAUDE.md`を読み、その規約に従う。
+  Knowledge Vaultの`20_Knowledge/`へ記録する。
+- Knowledge Vaultは個人タスクを管理しない。実行が必要な作業は候補として報告し、
+  確定的な課題はBacklogを正とする。
+- 単発の投稿文や記事ドラフトを`20_Knowledge/`へ保存しない。成果物は`40_Outputs/`が
+  受け持ち、Knowledgeと混在させない。
+- Knowledge Vaultへ記録する場合は、作業前に`$KNOWLEDGE_VAULT/AGENTS.md`を読み、その規約に従う。
 
 ## 収益化資産（note/Zenn等）の企画方針（2026-08-16確定）
 
@@ -101,8 +102,8 @@ metadata:
   積み上げてから販売開始するより、早期に有料記事を出し実測データ
   （CTR・購入率）を得ることを優先する。
 - 個別案件の実行判断・逆算根拠の詳細は、継続利用する戦略として
-  Exocortexの`wiki/`へ記録している場合、そちらを正とする
-  （例：`wiki/concepts/x-account-monetization-plan-2026-08.md`）。
+  Knowledge Vaultの`20_Knowledge/concepts/`へ記録している場合、そちらを正とする
+  （例：`20_Knowledge/concepts/x-account-monetization-plan-2026-08.md`）。
 
 ## 公開前チェック
 
@@ -132,7 +133,7 @@ X収益化プログラムの現況は`references/x-account-ops.md`を参照す�
 - 承認を求める際は、公開する最終内容、媒体、公開先、必要に応じて公開日時を提示する。
 - 修正依頼や「よさそう」などの反応を、投稿・送信操作の承認とみなさない。
 - Notionへの作成・更新など、`CLAUDE.md`で要承認とされている操作も事前承認を得る。
-- 会社関連の内容は`exocortex/CLAUDE.md`の匿名化ルールに従う。
+- 会社関連の内容は`$KNOWLEDGE_VAULT/AGENTS.md`の匿名化ルールに従う。
 - X（旧Twitter）への投稿・削除は`xurl`をBash経由で実行する
   （手順は`references/x-account-ops.md`）。このコマンドは`~/.claude/settings.json`の
   `permissions.ask`に登録済みで、実行時に必ず確認プロンプトが出る。失敗時に自動で

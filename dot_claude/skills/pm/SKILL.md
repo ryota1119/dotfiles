@@ -35,7 +35,7 @@ metadata:
 
 - GitHubはコード開発状況の確認先であり、個人タスク管理の正本ではない。
 - 確定的な会社データはBacklogまたはNotionを正とする。
-- 個人タスク管理はExocortex（第二の脳）の対象外。pmはプロジェクト課題（Backlog）のみを扱う。
+- 個人タスク管理はKnowledge Vault（第二の脳）の対象外。pmはプロジェクト課題（Backlog）のみを扱う。
 
 ## 課題の起票粒度
 

@@ -4,13 +4,13 @@ description: >
   ユーザーの業務秘書兼staffの窓口。依頼を受け付け、secretary / pm / research /
   marketing / engineeringのどこが担当するかを判定し、必要な作業を順序立てて進め、
   結果を一つにまとめて報告する。secretary自身は、Backlog課題起票の準備、
-  Exocortexのメモ・知識操作、複数サービスをまたぐ情報整理や下書きを担う。
+  Knowledge Vaultのメモ・知識操作、複数サービスをまたぐ情報整理や下書きを担う。
   「何からやればいい？」「これ対応して」「Backlogに課題を立てて」
   「メモして」「今日のまとめ」など、担当が不明な依頼や秘書的・横断的な依頼で使う。
   外部サービスへの確定的な書き込み・送信は、必ず事前承認を得てから行う。
   Also triggers on: "秘書", "これ対応して", "整理して", "段取りして", "今日のまとめ",
   "日次ブリーフ", "Backlogに課題", "チケットを切って",
-  "棚卸し", "メモして", "取り込んで", "Wikiに", "Exocortex", "第二の脳".
+  "棚卸し", "メモして", "取り込んで", "Wikiに", "Knowledge Vault", "Exocortex", "第二の脳".
 metadata:
   version: 3.1.0
 ---
@@ -66,17 +66,21 @@ metadata:
 - 実際の起票前に最終内容を提示し、明示的な承認を得る。
 - 起票後は課題キーとURLを報告する。
 
-### Exocortex
+### Knowledge Vault
 
-メモ、知識の取り込み・問い合わせ・点検では、
-作業前に`references/obsidian.md`と`~/Workspace/exocortex/CLAUDE.md`
-を読み、Vaultの最新規約に従う。
+メモ、知識の取り込み・問い合わせ・点検では、`vault`スキル（Gateway）を経由する。
+Gatewayが`$KNOWLEDGE_VAULT/AGENTS.md`を読み、該当するワークフロー
+（`vault-save` / `vault-ingest` / `vault-research` / `vault-review`）を選ぶ。
+検索・参照に専用skillはなく、AGENTS.mdの読み順（hot.md → index.md → 検索 →
+関連Knowledge）に従う。VaultのAGENTS.mdが規約の正本であり、それより先に書き込みを
+行わない。
 
-- Exocortexは個人タスクを管理しない（`tasks/`レイヤーは廃止）。長期的な知識のみを扱う。
-- `raw/`は読み取り専用とする。ユーザーがstaffによる例外操作を明示した場合だけ、
-  Vault側の承認手順に従う。
+- Knowledge Vaultは個人タスクを管理しない。長期的な知識のみを扱う。
+- Sourceの原本（`10_Sources/`）は書き換えない。都合に合わせて要約し直さない。
+- Canonical Knowledge（`20_Knowledge/`）を書き換えるのはMain Agentのみ。
+  subagentは調査結果を返すだけで書き込まない。
 - プロジェクト課題はBacklog、チームドキュメントはNotionを正とし、
-  Exocortexへ二重管理しない。
+  Knowledge Vaultへ二重管理しない。
 - 会社関連の知見を記録する場合は匿名化する。
 
 ### 情報整理・下書き
@@ -136,7 +140,6 @@ metadata:
 | 手順書 | 対象 | 状態 |
 |---|---|---|
 | `references/backlog-issue.md` | Backlog課題起票 | 稼働中 |
-| `references/obsidian.md` | Exocortexの知識操作 | 稼働中 |
 
 Gmail、Google Drive、Notion、日次ブリーフには現在、専用referenceがない。
 該当依頼では利用可能な機能と共通の承認ルールで対応し、反復可能な固有手順が
