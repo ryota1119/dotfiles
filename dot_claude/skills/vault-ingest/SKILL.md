@@ -12,7 +12,7 @@ description: >
   Also triggers on: "inboxを処理", "取り込んで", "vault-ingest", "クリップを取り込む",
   "週次の取り込み", "inboxを空にして", ".rawへ退避", "source-ledgerに登録".
 metadata:
-  version: 0.1.0
+  version: 0.3.0
 ---
 
 # vault-ingest — inbox のソースを取り込む
@@ -137,6 +137,69 @@ scripts/scan_inbox.py --vault ~/Workspace/exocortex --out <絶対パス>/queue.j
 
 リネームしない。サブディレクトリを掘らない。件数が3桁になったら見直す。
 
+## 原本の `.raw/` への退避（Tx-A）
+
+```bash
+scripts/build_archive_bundle.py --queue <queue.json> --out <bundle.json> \
+    --operation-id ingest-<YYYYMMDDTHHMMSS>-<slug> --snapshot <snapshot.json>
+```
+
+- **create しか出さない。** delete を混ぜない
+- `content_file` は inbox の実ファイルそのものの絶対パス。**コピーを作らない**
+- 不整合が1件でもあれば bundle を作らずに止まる
+- 退避先が既にあれば止まる。連番を付けない
+
+`--snapshot` は退避元の実測ハッシュを残す。**`plan` と `apply` の間に Google Drive の同期が
+走ると `original_sha256` 不一致で失敗しうる**ので、apply の直前に取り直して照合する。
+
+`.raw/` への create は **lint の件数を動かさない。** ページ解析（規則1〜7・11）は `wiki/` しか
+走査せず、`.raw/` を見るのは規則8（同期競合コピー）だけだから。ただし
+` (数字).md` / `のコピー` / `conflicted copy` / `- コピー` を名前に含むファイルを置くと
+規則8 が発火する。**予測は「増減なし」だが、ファイル名を確認してから書く。**
+
+## `inbox/` からの削除（Tx-C）
+
+**この skill で最も危険な処理。** 退避が完全に信用できる状態を作ってからでないと実行しない。
+
+```bash
+scripts/verify_archived.py --queue <queue.json> --out <delete-bundle.json> \
+    --operation-id ingest-<YYYYMMDDTHHMMSS>-<slug> --presentation <pres.md>
+```
+
+このスクリプトが次のゲートをすべて通したときだけ delete bundle を書く。**1つでも
+通らなければ何も書かず exit 1 で終わる。**
+
+| ゲート | 内容 |
+| --- | --- |
+| G3 | `queue.json` の不整合が0件 |
+| — | `.raw/` に Google Drive の競合コピーが無い |
+| G2 | **`.raw/` と `inbox/` の両方をその場で全読みして SHA256 を再計算し、全件一致する** |
+| G5 | 検証を通った件数が対象件数と完全一致する |
+
+**`queue.json` に記録したハッシュを信じない。** 記録から時間が経っており、その間に Drive の
+同期や Obsidian の保存が走りうる。同一ハッシュでサイズ違いは起こり得ないが、読み取りバグを
+検出する冗長チェックとしてサイズも比較する。
+
+**1件でも不一致があれば全件中止する。** 「一致した分だけ消す」をしない。部分的に消すと
+どこまで消えたかを後から追えなくなる。
+
+### 退避と削除を別トランザクションにする理由
+
+設計書7節は「ページ作成と ledger 追記を同一トランザクションに」と言っているが、
+**「原本退避と inbox 削除を同一トランザクションに」とは言っていない。** 分ける理由は3つ。
+
+1. G2 の保証は `.raw/` に実ファイルが存在してからでないと取れない。同一トランザクションだと
+   `plan` 時点では staging しか無く、**apply 直前の検証ができない**
+2. 同一トランザクションで失敗すると自動ロールバックで `.raw/` の create も巻き戻る。
+   **退避のやり直しになる。** 分けておけば退避は残る
+3. delete だけの bundle なら「delete 以外が**0件か**」を検査できる。混入の検出が単純になる
+
+### 承認の提示
+
+`--presentation` が規約3.2の2 に従うブロックを書く。**削除対象を1件ずつ全件列挙**し、
+delete 行を太字にし、各行に退避先と SHA256 一致確認を併記し、journal backup のパスを
+明記する。**「15件」と件数だけ書いて承認を求めない。**
+
 ## 承認ルール
 
 規約8節の `vault-ingest` 列を継承し、狭める方向にのみ上書きする。
@@ -177,3 +240,5 @@ scripts/scan_inbox.py --vault ~/Workspace/exocortex --out <絶対パス>/queue.j
 | ファイル | 用途 |
 | --- | --- |
 | `scripts/scan_inbox.py` | `inbox/` の走査・分類・`queue.json` の生成。読み取り専用 |
+| `scripts/build_archive_bundle.py` | `.raw/` への退避 bundle の組み立て（create のみ） |
+| `scripts/verify_archived.py` | 削除前のゲート検証と delete bundle・承認提示ブロックの生成 |
