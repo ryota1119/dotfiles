@@ -12,7 +12,7 @@ description: >
   Also triggers on: "inboxを処理", "取り込んで", "vault-ingest", "クリップを取り込む",
   "週次の取り込み", "inboxを空にして", ".rawへ退避", "source-ledgerに登録".
 metadata:
-  version: 0.4.0
+  version: 1.0.0
 ---
 
 # vault-ingest — inbox のソースを取り込む
@@ -241,6 +241,148 @@ scripts/build_ledger_relocate.py --queue <queue.json> --out <bundle.json> \
 **lint の予測は「violation・review とも増減なし」。** reconcile はページを1枚も作らず、
 `.raw/` と `inbox/` はページ解析の対象外だから。ずれたら次の write を発行せず止まる。
 
+## ページ草案の作成（ingest モード）
+
+未処理のソース1件から source ページを作る。**D-S1 により、ページ単独では作れない。**
+`index.md` への掲載と、既存の非ハブページからの被リンクが同じトランザクションに要る。
+
+### frontmatter と slug
+
+```yaml
+---
+type: source
+title: "<日本語の要約タイトル>"
+status: developing
+created: <取り込み日 YYYY-MM-DD>
+updated: <同上>
+tags:
+  - source
+  - <主題タグ2〜4件>
+---
+```
+
+- **`status` は必ず `developing`。** `evergreen` は昇格後の状態であり、skill が自分で付けない
+- `title` は**日本語で、何のソースかが分かる要約**。inbox の英語タイトルをそのまま使わない
+- slug は `wiki/sources/<英数ハイフン>-<YYYY-MM>.md`。既存43件がこの形で**例外を作らない**
+- slug が衝突したら `plan` が落ちる。**それは「同じソースが既にある」という事実**なので、
+  連番を付けて逃げず、上書き可否をボスに確認する
+
+### 本文
+
+```markdown
+# <title と同じ>
+
+<1〜3段落の要約。何のソースで、何が書いてあり、なぜこの vault に入れるか>
+
+## 概要
+
+## <主題ごとの節>
+
+## 出典
+
+- 原本: .raw/<name> （取得日: YYYY-MM-DD）
+```
+
+**`## 出典` は必須。** ここに `.raw/` の退避先と取得日を書く。見出しだけの節を作らない（規則6）。
+会社関連情報は `exocortex/CLAUDE.md` の匿名化ルールを適用する。
+
+### 被リンク先の選び方
+
+1. 新規ページの主題に最も近い既存ページを `wiki/concepts/` → `wiki/sources/` →
+   `wiki/entities/` の順で探す
+2. **既存の節に1行足す。新しい節を勝手に作らない**（既存ページの構造を変える副作用が大きい）
+3. **候補が無ければページを作らずに止めてボスへ報告する**（D-S1）
+
+**探索は skill が行い、「この相手が適切か」の判断はボスに出す**（規約2.1）。候補を最大3件、
+根拠付きで並べて推奨を1つ示す。**ハブ5枚は候補にできない**（被リンクに数えられない）。
+
+## source-ledger への登録
+
+```bash
+vaultctl --vault ~/Workspace/exocortex ledger stage \
+    --bundle <bundle.json> --add-source <add-source.json> \
+    --out <bundle.staged.json> --staging-dir <絶対パス>
+```
+
+`ledger stage` は vault を一切変更せず、ledger の replace を1件足した**新しい bundle** を出す。
+これがページ作成と ledger 追記を同一トランザクションに載せる仕組み（設計書7節）。
+
+**`--out` と `--staging-dir` は必ず絶対パスで渡す。** 相対だと `content_file` が相対になり、
+後続の `plan` が「content_file は絶対パスでなければなりません」で落ちる。規約10節が挙げる
+唯一の既知の罠で、`verify_ingest.py` が全 write に対して機械で確認する。
+
+**`generated_at` は `ledger stage` が更新しない。skill が更新する**（D-S5）。
+
+| 項目 | 決定 |
+| --- | --- |
+| タイミング | `ledger stage` の**実行後**、`plan` の**実行前** |
+| 方法 | staging の `source-ledger.json` を読み、書き換えて同じパスへ書き戻す |
+| 形式 | `2026-08-19T08:00:00Z` — **UTC・`Z` 終端・秒精度** |
+| 提示 | 規約3.2 の「差分の要点」に `generated_at: 旧 → 新` の1行を必ず載せる |
+
+**`plan` の後に書き換えない。** `apply` は `content_file` を読み直すため、承認された内容と
+実際に入る内容がずれる。
+
+### source エントリの埋め方
+
+| キー | 値 |
+| --- | --- |
+| `<source_id>` | `src-` ＋ 20桁 hex。**既存キーとの衝突を必ず確認する**（`dict.update` なので黙って上書きされる） |
+| `origin.locator` | URL があればそれ。無ければ **`.raw/<name>`**（`inbox/<name>` ではない） |
+| `content_sha256` | **原本ファイルの SHA256 をその場で再計算する。** `queue.json` の値を使わない |
+| `retrieved_at` | inbox ファイルの frontmatter の `created`（無ければ mtime の日付） |
+| `refresh_due` | `retrieved_at` の1年後 |
+| `pages` | 新規ページの vault 相対パス。**実在するパスを書く**（規則10-a 対策） |
+| `review_status` | **`active`**。`unreviewed` は規則10-c を増やす |
+| `title` | 日本語の要約。**匿名化ルールを適用する** |
+
+**原本を `.raw/` へ退避していないソースでは `content_sha256` を書けない。**
+その場合は捏造せず**キーごと省略し、理由を `notes` に書く**（2026-08-19 の Phase 3 で
+5件をこの形で登録した）。
+
+## ingest モードの通し手順
+
+```
+Tx-1: .raw/ への create                          → 承認 → apply → G2 検証
+Tx-2: ページ + index + 被リンク + log + ledger   → 承認 → apply → lint 照合
+Tx-3: inbox/ の delete                           → 承認 → apply → lint 照合
+```
+
+Tx-2 の検証:
+
+```bash
+scripts/verify_ingest.py --vault ~/Workspace/exocortex --plan <plan.json>
+```
+
+**全項目 `[OK]` でなければ apply しない。** 検証と apply を同じコマンドにまとめない
+（結果を見る前に走ってしまう）。
+
+**Tx-2 が失敗しても Tx-1 の `.raw/` は残る。** これは望ましい（原本は保全され `inbox/` にも
+残っている）。再実行時は `.raw/` の create が「既に存在」で落ちるので、**再実行の bundle
+からは `.raw/` の write を外し、外したことを提示に明記する。**
+
+**lint の予測は violation +0 / review +1。** 新規ページが `status: developing` なので
+規則9-a の個別 finding が1件増える。ただし**昇格待ちキューが既に上限5件に達している場合は
+増えない**（`vault-save` の SKILL.md と同じ条件式）。適用前に `developing` の枚数を数える。
+
+## バッチ処理
+
+`inbox/` に **10件以上**溜まっている場合は、1ソース1エージェントで並列に読解させ、
+返ってきた草案を親が1つのトランザクションにまとめる。
+
+- **1トランザクションに載せる新規ページは最大10件。** 規約3.2 の提示でボスが可否を
+  判断できる分量の目安
+- 各エージェントには**1ソースだけ**を渡し、`.raw/` の退避先・原本の SHA256・
+  既存 slug の一覧を添える。**エージェントに vault への書き込みをさせない**
+- 親が受け取るのはページ本文・title・slug 案・被リンク候補・ledger エントリ案だけ
+- **slug の衝突は親が解決する。** エージェント同士は互いの案を知らないため、同じ月の
+  似た主題で同じ slug を提案しうる
+- 被リンク先が同じページに集中した場合、**1ページへの複数行追記は1つの write にまとめる**
+  （同じ path への write が2件あると `plan` が「重複」で落ちる）
+
+エージェントの定義は `agents/vault-ingest-reader.md`。読み取り専用で、返すのは
+slug 案・frontmatter 案・本文・被リンク候補・ledger エントリ案の5つだけ。
+
 ## 承認ルール
 
 規約8節の `vault-ingest` 列を継承し、狭める方向にのみ上書きする。
@@ -284,3 +426,5 @@ scripts/build_ledger_relocate.py --queue <queue.json> --out <bundle.json> \
 | `scripts/build_archive_bundle.py` | `.raw/` への退避 bundle の組み立て（create のみ） |
 | `scripts/build_ledger_relocate.py` | `origin.locator` の `inbox/` → `.raw/` 書き換え bundle |
 | `scripts/verify_archived.py` | 削除前のゲート検証と delete bundle・承認提示ブロックの生成 |
+| `scripts/verify_ingest.py` | ingest の Tx-2 のプリフライト検証（ページ・index・被リンク・ledger） |
+| `agents/vault-ingest-reader.md` | バッチ処理で1ソースを読解する読み取り専用Agent の定義 |
