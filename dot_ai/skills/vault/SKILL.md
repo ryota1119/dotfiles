@@ -1,6 +1,6 @@
 ---
 name: vault
-description: Access, search, save, ingest, research, or review the user's Obsidian Knowledge Vault from any working directory. Use whenever the request touches the Knowledge Vault, the second brain, or long-term knowledge — saving something for later, recalling what is known, filing a source, or auditing the Vault.
+description: Access, search, save, ingest, research, or review the user's Obsidian Knowledge Vault from any working directory. The Vault goes by several names — Knowledge Vault, exocortex, Exocortex, エクソコルテックス, 第二の脳, second brain, vault — and all of them mean this one Vault. Use whenever the request touches it, or long-term knowledge in general: saving something for later, recalling what is known, filing a source, or auditing the Vault. Also triggers on: 「exocortexに保存」「第二の脳に保存」「Vaultに入れて」「exocortexを見て」「第二の脳から探して」.
 ---
 
 # Knowledge Vault Gateway
