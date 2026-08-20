@@ -129,10 +129,13 @@ case "$host" in
         # Codex の rollout JSONL は
         #   {"type":"response_item","payload":{"type":"message","role":...,"content":[{"type":"input_text"|"output_text","text":...}]}}
         # という形（2026-08-20実測）。role=developer は注入された指示なので落とす。
-        # Codex は <environment_context> や <recommended_plugins> を role=user として
-        # 差し込むため、これも落とす（実測で3.2KBあり、短い会話が誤って保存対象に
-        # なるうえダイジェストが汚れる）。タグ名は列挙する。`^<[a-z_]+>` のような
-        # 総称パターンだと `<div>` で始まる人間の発言を落としてしまう。
+        # Codex は <environment_context> <recommended_plugins> <task> など多数の
+        # ブロックと AGENTS.md 全文を role=user として差し込む。実測で全2440テキスト
+        # 中699がこれで、些細なセッションでもダイジェストが4.5KBに達して
+        # MIN_DIGEST_BYTES を突破し、headless実行が無駄に走っていた（1回25-40k tokens）。
+        # タグ名の列挙は破綻する（実測12種以上あり、Codexの版で変わる）。開きタグと
+        # 閉じタグが対応する塊、という構造で落とす。メッセージ全体が1つのタグで
+        # 包まれた人間の発言も落ちるが、その損失より無駄実行のコストが大きい。
         jq -r '
           select(.type == "response_item" and .payload.type == "message")
           | select(.payload.role == "user" or .payload.role == "assistant")
@@ -140,7 +143,7 @@ case "$host" in
           | [.payload.content[]? | select(.type == "input_text" or .type == "output_text") | .text]
           | .[]
           | select(. != null and (. | length) > 0)
-          | select(test("^<(environment_context|recommended_plugins|skills_instructions|user_instructions|plugins|stdin)>") | not)
+          | select((test("^<([a-z_]+)>[\\s\\S]*</\\1>") or test("^# AGENTS\\.md")) | not)
           | "\($role): \(.[0:'"$MAX_MSG_CHARS"'])"
         ' "$tpath" 2>/dev/null > "$digest" || true
         ;;
