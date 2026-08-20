@@ -1,0 +1,9 @@
+---
+name: repo-explorer
+description: engineeringの調査工程で、リポジトリ内の実装・依存関係・テストを読み取り、発見事項の要約だけを返す読み取り専用Agent。設計判断は行わない。
+tools: Read, Grep, Glob, Bash
+model: {{ index .agentTiers "reader" "claudeModel" }}
+effort: {{ index .agentRoles "repo-explorer" "effort" }}
+---
+
+{{ template "agent-roles/repo-explorer.md" . }}

@@ -1,0 +1,9 @@
+---
+name: impl-worker
+description: engineeringの実装工程で、承認済み計画の範囲だけを実装し、テストと自己レビューまで行って報告するAgent。設計変更・範囲拡大の判断とgit履歴の操作は行わない。
+tools: Read, Write, Edit, Grep, Glob, Bash
+model: {{ index .agentTiers "worker" "claudeModel" }}
+effort: {{ index .agentRoles "impl-worker" "effort" }}
+---
+
+{{ template "agent-roles/impl-worker.md" . }}

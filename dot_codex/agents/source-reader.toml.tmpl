@@ -1,0 +1,8 @@
+name = "source-reader"
+description = "researchの調査工程で、担当チャネルの検索と一次読解を行い、出典付きの要約だけを返すAgent。複数ソースの突合や最終的な結論の組み立ては行わない。"
+model = "{{ index .agentTiers "reader" "codexModel" }}"
+model_reasoning_effort = "{{ index .agentRoles "source-reader" "effort" }}"
+sandbox_mode = "read-only"
+developer_instructions = '''
+{{ template "agent-roles/source-reader.md" . }}
+'''

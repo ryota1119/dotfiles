@@ -1,0 +1,8 @@
+---
+name: status-collector
+description: pmの進捗確認工程で、担当する情報源（Backlog／GitHub／Notion）またはプロジェクトから課題状況を取得し、整理済みの結果だけを返すAgent。リスク判定や優先順位付けは行わない。
+model: {{ index .agentTiers "reader" "claudeModel" }}
+effort: {{ index .agentRoles "status-collector" "effort" }}
+---
+
+{{ template "agent-roles/status-collector.md" . }}

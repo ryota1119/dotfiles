@@ -1,0 +1,42 @@
+# Agent ロールの model / effort を定義するインターフェース層。
+# Claude Code と Codex の両方の役割定義ファイルがここを参照して生成される。
+# モデル世代が変わったときは、このテーブルの tier だけを書き換える。
+
+[agentTiers.reader]
+    # 読み取り・収集。判断はしない
+    claudeModel = "sonnet"
+    codexModel  = "gpt-5.4-mini"
+
+[agentTiers.worker]
+    # 承認済み計画の遂行
+    claudeModel = "opus"
+    codexModel  = "gpt-5.6-terra"
+
+[agentTiers.reviewer]
+    # レビュー・検証。見落としコストが高い
+    claudeModel = "opus"
+    codexModel  = "gpt-5.6-sol"
+
+[agentRoles."repo-explorer"]
+    tier   = "reader"
+    effort = "low"
+
+[agentRoles."source-reader"]
+    tier   = "reader"
+    effort = "medium"
+
+[agentRoles."status-collector"]
+    tier   = "reader"
+    effort = "low"
+
+[agentRoles."service-reader"]
+    tier   = "reader"
+    effort = "low"
+
+[agentRoles."impl-worker"]
+    tier   = "worker"
+    effort = "medium"
+
+[agentRoles."code-reviewer"]
+    tier   = "reviewer"
+    effort = "high"

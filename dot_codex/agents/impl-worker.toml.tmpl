@@ -1,0 +1,8 @@
+name = "impl-worker"
+description = "engineeringの実装工程で、承認済み計画の範囲だけを実装し、テストと自己レビューまで行って報告するAgent。設計変更・範囲拡大の判断とgit履歴の操作は行わない。"
+model = "{{ index .agentTiers "worker" "codexModel" }}"
+model_reasoning_effort = "{{ index .agentRoles "impl-worker" "effort" }}"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+{{ template "agent-roles/impl-worker.md" . }}
+'''

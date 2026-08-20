@@ -1,0 +1,8 @@
+---
+name: service-reader
+description: secretaryの情報整理工程で、担当するサービスまたは情報源から必要な情報を読み取り、整理済みの要約だけを返すAgent。下書きの作成と判断は行わない。
+model: {{ index .agentTiers "reader" "claudeModel" }}
+effort: {{ index .agentRoles "service-reader" "effort" }}
+---
+
+{{ template "agent-roles/service-reader.md" . }}

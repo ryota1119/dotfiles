@@ -1,0 +1,8 @@
+name = "repo-explorer"
+description = "engineeringの調査工程で、リポジトリ内の実装・依存関係・テストを読み取り、発見事項の要約だけを返す読み取り専用Agent。設計判断は行わない。"
+model = "{{ index .agentTiers "reader" "codexModel" }}"
+model_reasoning_effort = "{{ index .agentRoles "repo-explorer" "effort" }}"
+sandbox_mode = "read-only"
+developer_instructions = '''
+{{ template "agent-roles/repo-explorer.md" . }}
+'''

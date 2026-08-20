@@ -1,0 +1,8 @@
+name = "code-reviewer"
+description = "engineeringの実装レビュー工程で、変更差分を読み取り専用で検証し、重要度順の指摘だけを返すAgent。修正の適用と設計判断は行わない。"
+model = "{{ index .agentTiers "reviewer" "codexModel" }}"
+model_reasoning_effort = "{{ index .agentRoles "code-reviewer" "effort" }}"
+sandbox_mode = "read-only"
+developer_instructions = '''
+{{ template "agent-roles/code-reviewer.md" . }}
+'''

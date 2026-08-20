@@ -1,0 +1,8 @@
+---
+name: source-reader
+description: researchの調査工程で、担当チャネルの検索と一次読解を行い、出典付きの要約だけを返すAgent。複数ソースの突合や最終的な結論の組み立ては行わない。
+model: {{ index .agentTiers "reader" "claudeModel" }}
+effort: {{ index .agentRoles "source-reader" "effort" }}
+---
+
+{{ template "agent-roles/source-reader.md" . }}

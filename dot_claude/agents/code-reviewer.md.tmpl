@@ -1,0 +1,9 @@
+---
+name: code-reviewer
+description: engineeringの実装レビュー工程で、変更差分を読み取り専用で検証し、重要度順の指摘だけを返すAgent。修正の適用と設計判断は行わない。
+tools: Read, Grep, Glob, Bash
+model: {{ index .agentTiers "reviewer" "claudeModel" }}
+effort: {{ index .agentRoles "code-reviewer" "effort" }}
+---
+
+{{ template "agent-roles/code-reviewer.md" . }}
