@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""~/.codex/hooks.json へ SessionEnd フックを1件だけマージする。
+
+なぜ modify_ なのか:
+    このファイルは Orca と cmux が自分たちのフックを追記する共有ファイルで、
+    どちらが書き換えるか制御できない。chezmoi で全体を所有すると相手の
+    エントリを消してしまう。modify_ なら現在の内容を受け取って必要な1件を
+    足すだけなので、共存できるうえ、相手に消された場合も chezmoi apply で
+    戻る。
+
+前提（2026-08-20 実測）:
+    - Codex は SessionEnd フックを発火し、ペイロードは Claude Code と同じ
+      session_id / transcript_path / cwd / hook_event_name を持つ。
+    - SessionEnd の timeout は3秒に強制クランプされる。よって本体は即座に
+      detach する実装でなければならない。
+"""
+import json
+import os
+import sys
+
+COMMAND = os.path.join(os.environ["HOME"], ".local/bin/vault-knowledge-end") + " codex"
+EVENT = "SessionEnd"
+
+raw = sys.stdin.read().strip()
+if raw:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        # 壊れたJSONを黙って上書きすると他ツールのフックを失う。そのまま返す。
+        sys.stdout.write(raw + "\n")
+        sys.exit(0)
+else:
+    data = {}
+
+if not isinstance(data, dict):
+    sys.stdout.write(raw + "\n")
+    sys.exit(0)
+
+hooks = data.setdefault("hooks", {})
+entries = hooks.setdefault(EVENT, [])
+
+already = any(
+    h.get("command") == COMMAND
+    for entry in entries
+    if isinstance(entry, dict)
+    for h in entry.get("hooks", [])
+    if isinstance(h, dict)
+)
+
+if not already:
+    entries.append(
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": COMMAND,
+                    # Codex は3秒にクランプするので、この値は名目上のもの。
+                    "timeout": 3,
+                }
+            ]
+        }
+    )
+
+json.dump(data, sys.stdout, indent=2, ensure_ascii=False)
+sys.stdout.write("\n")
