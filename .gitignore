@@ -5,6 +5,10 @@
 *.tmp
 
 **/private_*
+# 例外: これは chezmoi のテンプレートで、値は onepasswordRead で apply 時に
+# 解決される。ファイル自体に平文の秘密は含まれない。private_ 接頭辞は
+# 展開後のパーミッションを600にするためだけに付いている。
+!dot_zsh/private_secrets.zsh.tmpl
 **/secret
 **/secret.*
 **/secrets/*
