@@ -1,0 +1,79 @@
+#!/bin/bash
+# Knowledge Vault への書き込みを直列化するロック。
+#
+#   vault-lock acquire [--timeout SECONDS]   取得できたら 0、タイムアウトなら 1
+#   vault-lock release                       常に 0
+#
+# 設計上の判断:
+#   - mkdir の原子性を使う。macOS に flock(1) が無いため。
+#   - 残骸の判定は経過時間ではなく PID の生存で行う。時間で判定すると、正当に長く
+#     かかっている書き込みのロックを奪ってしまう。
+#   - ロックは ~/.local/state 配下に置く。Vault 内に置くと remote へ乗って
+#     他マシンへ渡り、ロックとして成立しなくなる。
+#   - 呼び出し側は release を trap に仕掛ける責任を持つ。ここでは面倒を見ない。
+set -uo pipefail
+
+LOCK_DIR="${VAULT_LOCK_DIR:-${HOME}/.local/state/knowledge-vault/write.lock}"
+PID_FILE="${LOCK_DIR}/pid"
+POLL_SECONDS=1
+
+usage() {
+  printf 'usage: vault-lock acquire [--timeout SECONDS] | vault-lock release\n' >&2
+  exit 64
+}
+
+# ロックの保持者が生きているか。生きていなければ 1 を返す。
+# pidファイルが無い／空／数字以外を含む場合も「生きていない」とみなす。
+holder_alive() {
+  [ -f "$PID_FILE" ] || return 1
+  local pid
+  pid=$(cat "$PID_FILE" 2>/dev/null || true)
+  case "$pid" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  kill -0 "$pid" 2>/dev/null
+}
+
+acquire() {
+  local timeout=60
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --timeout) shift; [ $# -gt 0 ] || usage; timeout="$1"; shift ;;
+      *) usage ;;
+    esac
+  done
+  case "$timeout" in ''|*[!0-9]*) usage ;; esac
+
+  mkdir -p "$(dirname "$LOCK_DIR")" 2>/dev/null || true
+
+  local waited=0
+  while :; do
+    if mkdir "$LOCK_DIR" 2>/dev/null; then
+      printf '%s\n' "$PPID" > "$PID_FILE"
+      return 0
+    fi
+
+    # 取れなかった。保持者が死んでいれば奪う。
+    if ! holder_alive; then
+      rm -f "$PID_FILE" 2>/dev/null || true
+      rmdir "$LOCK_DIR" 2>/dev/null || true
+      continue
+    fi
+
+    [ "$waited" -ge "$timeout" ] && return 1
+    sleep "$POLL_SECONDS"
+    waited=$(( waited + POLL_SECONDS ))
+  done
+}
+
+release() {
+  rm -f "$PID_FILE" 2>/dev/null || true
+  rmdir "$LOCK_DIR" 2>/dev/null || true
+  return 0
+}
+
+case "${1:-}" in
+  acquire) shift; acquire "$@" ;;
+  release) release ;;
+  *) usage ;;
+esac
