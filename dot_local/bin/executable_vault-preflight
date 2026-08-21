@@ -1,0 +1,91 @@
+#!/bin/bash
+# 書き込み前に作業ツリーを分類する。
+#
+#   exit 0  続行してよい（クリーン、または巻き戻し署名の無い変更。緩い追加は自動commit済み）
+#   exit 2  要判断。古いコピーによる上書き、または壊れたファイルの疑い
+#   exit 1  検査自体が失敗した
+#
+# 設計上の判断:
+#   - 「削除があるか」では判定しない。正当な編集も既存記述を書き換える以上ふつうに
+#     行を削除するため、それでは常に止まってしまう。
+#   - 代わりに「人の編集では起きない署名」を見る。frontmatter の updated が進んで
+#     いないのに本文が縮む、複数ファイルのmtimeが秒単位で一致する、といった形。
+#   - macOS 前提。stat は -f 形式を使う。
+set -uo pipefail
+
+REPO="${VAULT_PREFLIGHT_REPO:-${KNOWLEDGE_VAULT:-}}"
+DELETION_LINES_THRESHOLD=20
+DELETION_RATIO_PERCENT=30
+
+[ -n "$REPO" ] || { printf 'vault-preflight: KNOWLEDGE_VAULT が未設定\n' >&2; exit 1; }
+[ -d "$REPO" ] || { printf 'vault-preflight: %s がディレクトリでない\n' "$REPO" >&2; exit 1; }
+cd "$REPO" || exit 1
+git rev-parse --git-dir >/dev/null 2>&1 || {
+  printf 'vault-preflight: %s はgitリポジトリでない\n' "$REPO" >&2; exit 1; }
+
+found=0
+report() { printf 'SIGNATURE: %s %s\n' "$1" "$2"; found=1; }
+
+# --- 署名1: UTF-8 として読めない ---
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  [ -f "$f" ] || continue
+  python3 -c "import sys; open(sys.argv[1], encoding='utf-8').read()" "$f" 2>/dev/null \
+    || report invalid-utf8 "$f"
+done < <(git status --porcelain | sed 's/^...//')
+
+# --- 署名2: updated が進んでいないのに本文が縮んだ ---
+while IFS=$'\t' read -r add del f; do
+  [ -n "$f" ] || continue
+  case "$f" in *.md) ;; *) continue ;; esac
+  [ "$add" = "-" ] && continue          # バイナリ
+  [ "$del" -gt "$add" ] || continue     # 縮んでいない
+  old_updated=$(git show "HEAD:$f" 2>/dev/null | awk -F': ' '/^updated:/{print $2; exit}')
+  [ -n "$old_updated" ] || continue     # frontmatter を持たないファイルは対象外
+  new_updated=$(awk -F': ' '/^updated:/{print $2; exit}' "$f" 2>/dev/null)
+  if [ "$old_updated" = "$new_updated" ]; then
+    report stale-updated "$f"
+  fi
+done < <(git diff --numstat HEAD)
+
+# --- 署名3: 削除が閾値を超えた ---
+while IFS=$'\t' read -r add del f; do
+  [ -n "$f" ] || continue
+  [ "$add" = "-" ] && continue
+  old_lines=$(git show "HEAD:$f" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$del" -gt "$DELETION_LINES_THRESHOLD" ]; then
+    report large-deletion "$f"
+  elif [ "${old_lines:-0}" -gt 0 ] \
+       && [ $(( del * 100 / old_lines )) -gt "$DELETION_RATIO_PERCENT" ]; then
+    report large-deletion "$f"
+  fi
+done < <(git diff --numstat HEAD)
+
+# --- 署名4: 複数の追跡ファイルのmtimeが秒単位で一致 ---
+dup=$(git diff --name-only HEAD \
+      | while IFS= read -r f; do
+          [ -f "$f" ] && stat -f '%m' "$f" 2>/dev/null
+        done | sort | uniq -d)
+if [ -n "$dup" ]; then
+  while IFS= read -r m; do
+    [ -n "$m" ] || continue
+    files=$(git diff --name-only HEAD \
+            | while IFS= read -r f; do
+                [ -f "$f" ] || continue
+                [ "$(stat -f '%m' "$f" 2>/dev/null)" = "$m" ] && printf '%s ' "$f"
+              done)
+    report mtime-cluster "$files"
+  done <<< "$dup"
+fi
+
+if [ "$found" -eq 1 ]; then
+  printf '\n巻き戻しの疑いがあります。差分を確認してから書き込んでください。\n'
+  exit 2
+fi
+
+# --- 署名なし。緩い変更を取り込んで進む ---
+if [ -n "$(git status --porcelain)" ]; then
+  git add -A || exit 1
+  git commit -q -m "chore: 未コミットの変更を書き込み前に取り込み" || exit 1
+fi
+exit 0
