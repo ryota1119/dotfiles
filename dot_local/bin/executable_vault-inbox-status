@@ -1,0 +1,43 @@
+#!/bin/bash
+# SessionStart フック。00_Inbox の未処理提案の件数を additionalContext で出す。
+#
+# 追記だけを許して削除の契機を持たない仕組みは必ず肥大するため、新しいセッションを
+# 開くたびに件数が目に入るようにして、人間の規律に依存せず閉じる。
+# 0件のときは何も出さない（無音であることに意味がある）。
+set -uo pipefail
+
+vault="${KNOWLEDGE_VAULT:-}"
+if [ -z "$vault" ] && [ -r "${HOME}/.claude/settings.json" ] && command -v jq >/dev/null 2>&1; then
+  vault=$(jq -r '.env.KNOWLEDGE_VAULT // empty' "${HOME}/.claude/settings.json" 2>/dev/null || true)
+fi
+[ -n "$vault" ] || exit 0
+[ -d "${vault}/00_Inbox" ] || exit 0
+
+count=$(find "${vault}/00_Inbox" -maxdepth 1 -name 'proposal-*.md' 2>/dev/null | wc -l | tr -d ' ')
+[ "${count:-0}" -gt 0 ] || exit 0
+
+oldest=$(find "${vault}/00_Inbox" -maxdepth 1 -name 'proposal-*.md' 2>/dev/null | sort | head -1)
+oldest_days=""
+if [ -n "$oldest" ]; then
+  mtime=$(stat -f '%m' "$oldest" 2>/dev/null || echo "")
+  if [ -n "$mtime" ]; then
+    oldest_days=$(( ( $(date +%s) - mtime ) / 86400 ))
+  fi
+fi
+
+if [ -n "$oldest_days" ]; then
+  msg="Knowledge Vault の 00_Inbox に未処理の提案が ${count} 件あります（最古は ${oldest_days} 日前）。vault-ingest で処理できます。"
+else
+  msg="Knowledge Vault の 00_Inbox に未処理の提案が ${count} 件あります。vault-ingest で処理できます。"
+fi
+
+python3 - "$msg" <<'PY'
+import json, sys
+print(json.dumps({
+    "hookSpecificOutput": {
+        "hookEventName": "SessionStart",
+        "additionalContext": sys.argv[1],
+    }
+}, ensure_ascii=False))
+PY
+exit 0
