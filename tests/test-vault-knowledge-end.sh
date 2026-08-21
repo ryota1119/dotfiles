@@ -30,6 +30,20 @@ export HOME="$test_root/home"
 mkdir -p "$HOME"
 export KNOWLEDGE_VAULT="$vault"
 
+# headless LLM を実際に呼ばないようスタブへ差し替える。呼ばれた事実だけ記録する。
+stub_bin="$test_root/stub-bin"
+mkdir -p "$stub_bin"
+cat > "$stub_bin/claude" <<'STUB'
+#!/bin/sh
+printf '%s\n' "$*" >> "${VAULT_TEST_STUB_LOG}"
+exit 0
+STUB
+chmod +x "$stub_bin/claude"
+cp "$stub_bin/claude" "$stub_bin/codex"
+export VAULT_TEST_STUB_LOG="$test_root/stub-calls.log"
+: > "$VAULT_TEST_STUB_LOG"
+export PATH="$stub_bin:$PATH"
+
 # 2000バイトゲートを超える長さのトランスクリプトを作る
 tpath="$test_root/transcript.jsonl"
 : > "$tpath"
@@ -89,11 +103,34 @@ printf '%s' "$(payload shortsess0000 "$short")" | "$hook" claude
 [ "$(count_proposals)" = "1" ] || fail "短いセッションで投函された（$(count_proposals)件）"
 ok "2000バイト未満は投函しない"
 
-# 8. ロック・detach・再帰ガードが撤去されている
+# 8. ロックは撤去されている（gitに触らないため不要）
 grep -q 'LOCK_DIR' "$src" && fail "ロックの残骸がある"
-grep -qE 'disown|nohup' "$src" && fail "detach の残骸がある"
-grep -q 'VAULT_KNOWLEDGE_HOOK_ACTIVE' "$src" && fail "再帰ガードの残骸がある"
-grep -qE 'claude -p|codex exec' "$src" && fail "headless CLI 起動の残骸がある"
-ok "ロック・detach・再帰ガード・headless起動が撤去されている"
+ok "ロックが撤去されている"
+
+# 9. 生ダイジェストが先に投函されている（headlessが失敗してもキャプチャは残る）
+grep -q 'この時点では生のダイジェスト' "$f" || fail "暫定である旨の注記が無い"
+ok "生ダイジェストを先に投函し、暫定である旨を明記している"
+
+# 10. headless 要約が detach で起動される
+grep -qE 'claude -p' "$src" || fail "claude の headless 起動が無い"
+grep -qE 'codex exec' "$src" || fail "codex の headless 起動が無い"
+grep -q 'disown' "$src" || fail "detach していない"
+grep -q 'VAULT_KNOWLEDGE_HOOK_ACTIVE' "$src" || fail "再帰ガードが無い"
+ok "headless 要約を detach で起動し、再帰ガードがある"
+
+# 11. headless に git 系ツールを渡していない
+grep -q 'Bash(git' "$src" && fail "headless に git ツールを渡している"
+grep -q 'allowedTools "Read,Write,Edit,Grep,Glob"' "$src" \
+  || fail "allowedTools が想定と違う"
+ok "headless に git 系ツールを渡していない"
+
+# 12. スタブが実際に呼ばれた（detachなので少し待つ）
+waited=0
+while [ ! -s "$VAULT_TEST_STUB_LOG" ] && [ "$waited" -lt 10 ]; do
+  sleep 1; waited=$(( waited + 1 ))
+done
+[ -s "$VAULT_TEST_STUB_LOG" ] || fail "headless が起動されていない（${waited}秒待機）"
+grep -q -- "-p" "$VAULT_TEST_STUB_LOG" || fail "claude -p の形で呼ばれていない"
+ok "headless が実際に起動される"
 
 printf '\nすべて通過\n'
