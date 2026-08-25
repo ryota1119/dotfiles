@@ -82,7 +82,9 @@ metadata:
 - Knowledge Vaultは個人タスクを管理しない。実行が必要な作業は候補として報告し、
   確定的な課題はBacklogを正とする。
 - 単発の投稿文や記事ドラフトを`20_Knowledge/`へ保存しない。成果物は`40_Outputs/`が
-  受け持ち、Knowledgeと混在させない。
+  受け持ち、Knowledgeと混在させない。保存はボスが明示的に依頼した場合のみで、
+  既定はチャット提示に留める。書式は`$KNOWLEDGE_VAULT/AGENTS.md`の
+  `## Output notes`に従う。
 - Knowledge Vaultへ記録する場合は、作業前に`$KNOWLEDGE_VAULT/AGENTS.md`を読み、その規約に従う。
 
 ## 収益化資産（note/Zenn等）の企画方針（2026-08-16確定）
