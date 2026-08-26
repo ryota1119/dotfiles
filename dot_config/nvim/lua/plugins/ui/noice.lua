@@ -23,6 +23,7 @@ return {
   },
   dependencies = {
     "MunifTanjim/nui.nvim",
-    "rcarriga/nvim-notify",
+    -- background_colour: 透過100%時の代替色。未指定だと警告が出るためcolorschemeの背景色を明示
+    { "rcarriga/nvim-notify", opts = { background_colour = "#0d1117" } },
   },
 }
