@@ -14,7 +14,7 @@ opt.relativenumber = false  -- 絶対行番号（固定）
 opt.tabstop = 2       -- タブ文字の幅
 opt.shiftwidth = 2    -- インデントの幅
 opt.expandtab = true  -- タブをスペースに変換
-opt.smartindent = true -- スマートインデント
+opt.smartindent = false -- C系向けの機能。indentexpr を持たない filetype で副作用があるため無効
 opt.autoindent = true  -- 自動インデント
 
 -- 検索

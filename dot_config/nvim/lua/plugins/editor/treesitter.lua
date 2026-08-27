@@ -50,7 +50,10 @@ return {
           pcall(vim.treesitter.start, args.buf)
           vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
           vim.wo[0][0].foldmethod = "expr"
-          vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          -- indent は treesitter に任せない。main ブランチの indentexpr は
+          -- experimental で、書きかけ（構文エラー）の行を括弧の継続行と誤判定し、
+          -- Python では `class Foo(Bar)` のコロン待ち状態でインデントが暴れる。
+          -- Neovim 標準の indent/*.vim（Python は python#GetIndent）に任せる。
         end,
       })
     end,
