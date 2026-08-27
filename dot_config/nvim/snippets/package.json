@@ -6,6 +6,10 @@
       {
         "language": ["all"],
         "path": "./global.json"
+      },
+      {
+        "language": ["python"],
+        "path": "./python.json"
       }
     ]
   }

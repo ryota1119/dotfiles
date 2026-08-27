@@ -11,11 +11,16 @@ vim.g.loaded_node_provider = 0
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 
--- 壊れた snippet による Neovim 0.12 のパースエラーを握りつぶす安全弁。
--- 一部の VSCode 形式 snippet（friendly-snippets の python tryef 等）には
--- ${2: ${3:Exception} as ${4:e}} のような入れ子プレースホルダが含まれ、
--- runtime/lua/vim/snippet.lua の Lua パーサが失敗してエラーが赤く表示される。
--- 失敗時は静かに無視し、補完候補としては挿入されないだけにする。
+-- 壊れた snippet による Neovim 0.12 のパースエラーを致命的にしない安全弁。
+-- 一部の VSCode 形式 snippet（friendly-snippets の python try / trya / tryf /
+-- tryef 等）には ${4:raise $3} や ${2: ${3:Exception} as ${4:e}} のような
+-- 入れ子プレースホルダ・タブストップ参照が含まれ、
+-- runtime/lua/vim/snippet.lua の Lua パーサが失敗する。
+--
+-- 重要: blink.cmp は accept 時に「入力済みテキストを削除してから expand」する
+-- （completion/accept/init.lua）。そのため expand が失敗すると、打った文字が
+-- 消えたまま何も挿入されないという分かりにくい壊れ方になる。
+-- 失敗自体を黙って捨てると原因に気付けないため、WARN で通知する。
 do
   local ok, snippet = pcall(require, "vim.snippet")
   if ok and type(snippet.expand) == "function" then
@@ -26,7 +31,7 @@ do
         vim.schedule(function()
           vim.notify(
             "snippet expand failed (ignored): " .. tostring(err),
-            vim.log.levels.DEBUG,
+            vim.log.levels.WARN,
             { title = "snippet" }
           )
         end)
