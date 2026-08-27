@@ -6,16 +6,17 @@ return {
     "neovim/nvim-lspconfig",
   },
   opts = {
-    -- vim.lsp.enable() で有効化する言語サーバーを自動インストール
+    -- 言語サーバーを自動インストール
     ensure_installed = {
       "lua_ls",
-      "ruby_lsp",
       "basedpyright",
       "ruff",
       "ts_ls",
       "terraformls",
       "gopls",
     },
-    automatic_installation = true,
+    -- インストール済みサーバーを vim.lsp.enable() で自動有効化
+    -- 個別設定は after/lsp/<name>.lua で上書きする
+    automatic_enable = true,
   },
 }
