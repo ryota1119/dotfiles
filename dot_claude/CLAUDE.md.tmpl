@@ -5,4 +5,34 @@
 
 {{ template "agent-instructions/output-style.md" . }}
 
+## git
+
+### ブランチ命名
+
+`<種別>/<内容>` の形式にする。個人名や作業者名を接頭辞にしない。
+内容は英小文字とハイフンで、何の作業か分かる語にする。
+
+種別はコミットメッセージの接頭辞と同じ語を使う。
+
+| 種別 | 用途 |
+|---|---|
+| `feature` | 機能追加 |
+| `fix` | 不具合修正 |
+| `update` | 既存機能の変更・改善 |
+| `refactor` | 挙動を変えない内部整理 |
+| `config` | 設定・ビルド・デプロイ構成の変更 |
+| `dependencies` | 依存関係の追加・更新 |
+
+例: `feature/shop-scan-mode`、`fix/pdf-text-fallback`、`refactor/analyzer-base-class`
+
+`create` は過去のコミットで使われているが、`feature` と用途が重なるため
+新規のブランチでは使わない。
+
+### コミットメッセージ
+
+`[種別] 概要` の形式で、種別は上表と同じ語を使う。日本語で書く。
+概要は変更内容が分かる一文にし、必要なら空行の後に理由と背景を続ける。
+
+なぜその変更が必要だったかを本文に残す。何を変えたかは差分を見れば分かる。
+
 {{ template "agent-instructions/approval-boundary.md" . }}
