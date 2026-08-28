@@ -56,12 +56,19 @@ return {
           -- friendly-snippets の python try / trya / tryf / tryef のように
           -- ${4:raise $3} や入れ子プレースホルダを含むものは vim.snippet.expand が
           -- 失敗し、選んでも何も挿入されない。候補に出さないのが唯一まともな扱い。
+          -- safe_parse は blink の内部モジュールなので、将来 blink 側の変更で
+          -- 消えたり署名が変わったりし得る。その場合はフィルタを諦めて素通しする
+          -- （候補が減らないだけで、補完自体は壊れない）。
           transform_items = function(_, items)
-            local safe_parse = require("blink.cmp.sources.snippets.utils").safe_parse
+            local ok, utils = pcall(require, "blink.cmp.sources.snippets.utils")
+            if not ok or type(utils.safe_parse) ~= "function" then return items end
+
             return vim.tbl_filter(function(item)
               local text = item.textEdit and item.textEdit.newText or item.insertText
               if text == nil then return true end
-              return safe_parse(text) ~= nil
+              local parsed_ok, parsed = pcall(utils.safe_parse, text)
+              if not parsed_ok then return true end
+              return parsed ~= nil
             end, items)
           end,
         },
